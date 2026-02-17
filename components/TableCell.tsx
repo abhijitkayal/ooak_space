@@ -1,15 +1,13 @@
-"use client";
+// "use client";
 
 import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import { Column, Row, useTableStore } from "@/app/store/TableStore";
 
-export default function TableCell({
-  row,
-  col,
-}: {
-  row: Row;
-  col: Column;
-}) {
+export default function TableCell({ row, col }: { row: Row; col: Column }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const value = row.cells?.[col._id];
   const { updateCell } = useTableStore();
 
@@ -23,6 +21,8 @@ export default function TableCell({
     await updateCell(row._id, col._id, local);
   };
 
+  const inputClass = `w-full outline-none text-sm bg-transparent ${isDark ? "text-gray-200 placeholder-gray-600" : "text-gray-900 placeholder-gray-400"}`;
+
   // checkbox
   if (col.type === "checkbox") {
     return (
@@ -31,6 +31,7 @@ export default function TableCell({
           type="checkbox"
           checked={!!value}
           onChange={(e) => updateCell(row._id, col._id, e.target.checked)}
+          className={isDark ? "accent-blue-500" : "accent-blue-600"}
         />
       </div>
     );
@@ -45,7 +46,7 @@ export default function TableCell({
           value={local ? String(local).slice(0, 10) : ""}
           onChange={(e) => setLocal(e.target.value)}
           onBlur={save}
-          className="w-full outline-none text-sm"
+          className={`${inputClass} ${isDark ? "color-scheme-dark" : ""}`}
         />
       </div>
     );
@@ -60,7 +61,7 @@ export default function TableCell({
           value={local}
           onChange={(e) => setLocal(e.target.value)}
           onBlur={save}
-          className="w-full outline-none text-sm"
+          className={inputClass}
         />
       </div>
     );
@@ -73,7 +74,7 @@ export default function TableCell({
         value={local}
         onChange={(e) => setLocal(e.target.value)}
         onBlur={save}
-        className="w-full outline-none text-sm bg-transparent"
+        className={inputClass}
       />
     </div>
   );
