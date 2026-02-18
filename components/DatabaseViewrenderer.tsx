@@ -2,6 +2,7 @@ import TimelineView from "./TimelineView";
 import TableView from "./view/TableView";
 import TableView1 from './gallery/TableView';
 import GalleryView from "./gallery/GalleryView";
+import BoardView from "./board/BoardView";
 
 
 export default function DatabaseViewRenderer({ db }: any) {
@@ -10,7 +11,7 @@ export default function DatabaseViewRenderer({ db }: any) {
   }
 
   if (db.viewType === "board") {
-    return <div className="p-6 border rounded-2xl">🧩 Board View (coming)</div>;
+    return <BoardView databaseId={db._id} />;
   }
 
   if (db.viewType === "gallery") {
@@ -22,5 +23,3 @@ export default function DatabaseViewRenderer({ db }: any) {
 
   return <div className="p-6 border rounded-2xl">📊 Table View (coming)</div>;
 }
-
-

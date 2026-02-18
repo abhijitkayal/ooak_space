@@ -1,0 +1,342 @@
+"use client";
+
+import { title } from "process";
+import { useEffect, useMemo, useState } from "react";
+
+type Property = {
+  _id: string;
+  name: string;
+  type: string;
+  options?: string[];
+};
+
+const BOARD_COLUMNS = ["In Progress", "Done", "Not Complete"];
+
+export default function CreateTaskModal({
+  isOpen,
+  onClose,
+  databaseId,
+  onSaved,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  databaseId: string;
+  onSaved: () => void;
+}) {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [extraProps, setExtraProps] = useState<Property[]>([]);
+
+  const [loading, setLoading] = useState(true);
+
+  // values for new task
+  const [taskName, setTaskName] = useState("");
+  const [status, setStatus] = useState("In Progress");
+  const [extraValues, setExtraValues] = useState<Record<string, any>>({});
+
+  const fetchProps = async () => {
+    setLoading(true);
+    const res = await fetch(`/api/properties?databaseId=${databaseId}`);
+    setProperties(await res.json());
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetchProps();
+  }, [isOpen]);
+
+  // reset on close
+//   useEffect(() => {
+//     if (!isOpen) {
+//       setTaskName("");
+//       setStatus("In Progress");
+//       setExtraProps([]);
+//       setExtraValues({});
+//     }
+//   }, [isOpen]);
+
+useEffect(() => {
+  const ensureDefaultProps = async () => {
+    if (!isOpen) return;
+
+    const res = await fetch(`/api/properties?databaseId=${databaseId}`);
+    const props = await res.json();
+
+    // title property
+    let title = props[0];
+
+    // status property
+    let status = props.find(
+      (p: any) => p.name.trim().toLowerCase() === "status"
+    );
+
+    // if no title property -> create
+    if (!title) {
+      await fetch("/api/properties", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          databaseId,
+          name: "Task Name",
+          type: "text",
+          options: [],
+        }),
+      });
+    }
+
+    // if no status property -> create
+    if (!status) {
+      console.log("Creating Status property with options:", BOARD_COLUMNS);
+      const statusRes = await fetch("/api/properties", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          databaseId,
+          name: "Status",
+          type: "select",
+          options: BOARD_COLUMNS,
+        }),
+      });
+      
+      if (statusRes.ok) {
+        console.log("Status property created successfully");
+      } else {
+        console.error("Failed to create Status property:", await statusRes.text());
+      }
+    }
+
+    // finally reload props
+    fetchProps();
+  };
+
+  ensureDefaultProps();
+}, [isOpen, databaseId]);
+
+
+  const titleProp = useMemo(() => properties[0], [properties]);
+
+//   const statusProp = useMemo(() => {
+//     return properties.find((p) => p.name.toLowerCase() === "status");
+//   }, [properties]);
+
+  const createProperty = async () => {
+    const name = prompt("Property name?");
+    if (!name) return;
+
+    const type = prompt("Type? (text/date/select)") || "text";
+
+    const options =
+      type === "select"
+        ? prompt("Options comma separated?")?.split(",").map((x) => x.trim()) ||
+          []
+        : [];
+
+    const res = await fetch("/api/properties", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        databaseId,
+        name,
+        type,
+        options,
+      }),
+    });
+
+    const created = await res.json();
+
+    // store inside modal only (single time)
+    setExtraProps((prev) => [...prev, created]);
+
+    // refresh global list too
+    fetchProps();
+  };
+
+//   const createTask = async () => {
+//     if (!titleProp || !statusProp) return;
+
+//     const values: any = {
+//       [titleProp._id]: taskName || "Untitled task",
+//       [statusProp._id]: status,
+//     };
+
+//     // apply extra fields only for this task
+//     for (const p of extraProps) {
+//       values[p._id] = extraValues[p._id] ?? "";
+//     }
+
+//     await fetch("/api/items", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({
+//         databaseId,
+//         values,
+//       }),
+//     });
+
+//     onSaved();
+//     onClose();
+//   };
+
+const createTask = async () => {
+  console.log("Creating task with status:", status);
+  console.log("titleProp:", titleProp);
+//   console.log("statusProp:", statusProp);
+
+  if (!titleProp) {
+    alert("Title or Status property missing!");
+    console.log("Missing properties - titleProp:", titleProp, "statusProp:", statusProp);
+    return;
+  }
+
+  const values: any = {
+    [titleProp._id]: taskName || "Untitled task",
+    // [statusProp._id]: status,
+    Status:status,
+  };
+  
+  console.log("Task values to save:", values);
+
+  for (const p of extraProps) {
+    values[p._id] = extraValues[p._id] ?? "";
+  }
+
+  const res = await fetch("/api/board_items", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      databaseId,
+      values,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    console.log("Create task failed:", err);
+    alert("Task create failed. Check console.");
+    return;
+  }
+
+  onSaved();
+  onClose();
+};
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
+      <div className="w-full max-w-lg bg-white rounded-2xl border shadow-xl p-5">
+        <div className="flex items-center justify-between">
+          <div className="font-semibold text-lg">New Task</div>
+
+          <button
+            onClick={onClose}
+            className="text-sm px-2 py-1 rounded-md hover:bg-gray-100"
+          >
+            ✕
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="p-6 text-sm text-gray-500">Loading...</div>
+        ) : (
+          <div className="mt-4 space-y-4">
+            {/* ALWAYS FIELD 1 */}
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Task name</div>
+              <input
+                value={taskName}
+                onChange={(e) => setTaskName(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 outline-none"
+                placeholder="Untitled task"
+              />
+            </div>
+
+            {/* ALWAYS FIELD 2 */}
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Status</div>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 outline-none bg-white"
+              >
+                {BOARD_COLUMNS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* EXTRA FIELDS (only this session) */}
+            {extraProps.map((p) => (
+              <div key={p._id}>
+                <div className="text-xs text-gray-500 mb-1">{p.name}</div>
+
+                {p.type === "date" ? (
+                  <input
+                    type="date"
+                    value={extraValues[p._id] || ""}
+                    onChange={(e) =>
+                      setExtraValues((prev) => ({
+                        ...prev,
+                        [p._id]: e.target.value,
+                      }))
+                    }
+                    className="w-full border rounded-lg px-3 py-2 outline-none"
+                  />
+                ) : p.type === "select" ? (
+                  <select
+                    value={extraValues[p._id] || ""}
+                    onChange={(e) =>
+                      setExtraValues((prev) => ({
+                        ...prev,
+                        [p._id]: e.target.value,
+                      }))
+                    }
+                    className="w-full border rounded-lg px-3 py-2 outline-none bg-white"
+                  >
+                    <option value="">Select...</option>
+                    {(p.options || []).map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    value={extraValues[p._id] || ""}
+                    onChange={(e) =>
+                      setExtraValues((prev) => ({
+                        ...prev,
+                        [p._id]: e.target.value,
+                      }))
+                    }
+                    className="w-full border rounded-lg px-3 py-2 outline-none"
+                    placeholder="Enter value"
+                  />
+                )}
+              </div>
+            ))}
+
+            {/* BUTTONS */}
+            <div className="flex items-center justify-between pt-2">
+              <button
+                onClick={createProperty}
+                className="text-sm px-3 py-2 rounded-lg border hover:bg-gray-50"
+              >
+                + Add property
+              </button>
+
+              <button
+                onClick={createTask}
+                className="text-sm px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-900"
+              >
+                Create task
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
