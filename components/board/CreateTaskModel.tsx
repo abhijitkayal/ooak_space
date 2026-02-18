@@ -2,6 +2,7 @@
 
 import { title } from "process";
 import { useEffect, useMemo, useState } from "react";
+import AddPropertyModal from "../gallery/AddPropertyModal";
 
 type Property = {
   _id: string;
@@ -220,6 +221,8 @@ const createTask = async () => {
   onClose();
 };
 
+const [showAddProperty, setShowAddProperty] = useState(false);
+
   if (!isOpen) return null;
 
   return (
@@ -321,7 +324,7 @@ const createTask = async () => {
             {/* BUTTONS */}
             <div className="flex items-center justify-between pt-2">
               <button
-                onClick={createProperty}
+                onClick={() => setShowAddProperty(true)}
                 className="text-sm px-3 py-2 rounded-lg border hover:bg-gray-50"
               >
                 + Add property
@@ -337,6 +340,14 @@ const createTask = async () => {
           </div>
         )}
       </div>
+      {showAddProperty && (
+        <AddPropertyModal
+          isOpen={showAddProperty}
+          onClose={() => setShowAddProperty(false)}
+          databaseId={databaseId}
+          onSaved={fetchProps}
+        />
+      )}
     </div>
   );
 }
