@@ -63,12 +63,12 @@ export default function DatabaseTabs({ projectId }: { projectId: string }) {
 
   return (
     <Tabs.Root defaultValue={dbs[0]._id}>
-      <Tabs.List className={`flex gap-2 border-b pb-2 ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+      <Tabs.List className={`flex gap-2 border-b pb-2 overflow-x-auto overflow-y-hidden ${isDark ? "border-gray-700" : "border-gray-200"}`}>
         {dbs.map((db) => (
           <Tabs.Trigger
             key={db._id}
             value={db._id}
-            className={`px-3 py-2 text-sm rounded-xl transition-colors ${isDark ? "text-gray-400 data-[state=active]:bg-gray-800 data-[state=active]:text-white hover:text-gray-200" : "text-gray-600 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 hover:text-gray-900"}`}
+            className={`px-3 py-2 text-sm rounded-xl transition-colors whitespace-nowrap flex-shrink-0 ${isDark ? "text-gray-400 data-[state=active]:bg-gray-800 data-[state=active]:text-white hover:text-gray-200" : "text-gray-600 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 hover:text-gray-900"}`}
           >
             <span className="mr-2">{db.icon}</span>
             {db.name}

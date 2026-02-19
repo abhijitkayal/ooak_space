@@ -1,6 +1,8 @@
+
 // "use client";
 
 // import { useEffect, useMemo, useState } from "react";
+// import { useTheme } from "next-themes";
 // import AddPropertyModal from "./AddPropertyModal";
 // import GalleryItemModal from "./GalleryItemModal";
 
@@ -8,7 +10,7 @@
 //   _id: string;
 //   databaseId: string;
 //   name: string;
-//   type: string; // text, select, multi_select, date...
+//   type: string;
 //   options?: Array<{ label: string; color: string }>;
 // };
 
@@ -20,6 +22,9 @@
 // };
 
 // export default function GalleryView({ databaseId }: { databaseId: string }) {
+//   const { resolvedTheme } = useTheme();
+//   const isDark = resolvedTheme === "dark";
+
 //   const [properties, setProperties] = useState<Property[]>([]);
 //   const [items, setItems] = useState<Item[]>([]);
 //   const [loading, setLoading] = useState(true);
@@ -27,7 +32,6 @@
 //   const [showAddProperty, setShowAddProperty] = useState(false);
 //   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
 //   const [showItemModal, setShowItemModal] = useState(false);
-
 
 //   const fetchAll = async () => {
 //     setLoading(true);
@@ -39,7 +43,6 @@
 
 //     setProperties(await pRes.json());
 //     setItems(await iRes.json());
-//     // console.log(await pRes.json());
 //     setLoading(false);
 //   };
 
@@ -47,20 +50,14 @@
 //     fetchAll();
 //   }, [databaseId]);
 
-//   // first property = title
 //   const titleProp = useMemo(() => properties[0], [properties]);
-
-//   // show only some properties inside card
 //   const cardProps = useMemo(() => properties.slice(1, 5), [properties]);
 
 //   const createItem = async () => {
 //     await fetch("/api/items", {
 //       method: "POST",
 //       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({
-//         databaseId,
-//         values: {},
-//       }),
+//       body: JSON.stringify({ databaseId, values: {} }),
 //     });
 
 //     fetchAll();
@@ -94,25 +91,33 @@
 //     return String(value);
 //   };
 
-//   if (loading) return <div className="p-6">Loading gallery...</div>;
+//   if (loading) {
+//     return (
+//       <div className={`p-6 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+//         Loading gallery...
+//       </div>
+//     );
+//   }
 
 //   return (
-//     <div className="rounded-2xl border bg-white overflow-hidden">
+//     <div className={`rounded-2xl border overflow-hidden ${isDark ? "bg-[#18191d] border-gray-800" : "bg-white border-gray-200"}`}>
 //       {/* HEADER */}
-//       <div className="flex items-center justify-between px-4 py-3 border-b">
-//         <div className="font-semibold">Gallery</div>
+//       <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
+//         <div className={`font-semibold ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+//           Gallery
+//         </div>
 
 //         <div className="flex gap-2">
 //           <button
 //             onClick={() => setShowAddProperty(true)}
-//             className="px-3 py-1.5 rounded-lg border hover:bg-gray-50 text-sm"
+//             className={`px-3 py-1.5 rounded-lg border text-sm ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
 //           >
 //             + Property
 //           </button>
 
 //           <button
 //             onClick={createItem}
-//             className="px-3 py-1.5 rounded-lg border hover:bg-gray-50 text-sm"
+//             className={`px-3 py-1.5 rounded-lg border text-sm ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
 //           >
 //             + New
 //           </button>
@@ -122,7 +127,7 @@
 //       {/* CARDS GRID */}
 //       <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 //         {items.length === 0 && (
-//           <div className="col-span-full text-center py-12 text-gray-400">
+//           <div className={`col-span-full text-center py-12 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
 //             <div className="text-4xl mb-2">📦</div>
 //             <div className="text-lg">No items yet</div>
 //             <div className="text-sm mt-1">Click "+ New" to create your first card</div>
@@ -136,14 +141,14 @@
 //             <div
 //               key={it._id}
 //               onClick={() => handleCardClick(it)}
-//               className="rounded-xl border bg-white shadow-sm hover:shadow-md transition p-4 cursor-pointer"
+//               className={`rounded-xl border shadow-sm hover:shadow-md transition p-4 cursor-pointer ${isDark ? "bg-[#1e1f23] border-gray-700 hover:bg-[#252730]" : "bg-white border-gray-200 hover:bg-gray-50"}`}
 //             >
 //               {/* Title */}
-//               <div className="text-base font-semibold text-gray-900 line-clamp-2">
+//               <div className={`text-base font-semibold line-clamp-2 ${isDark ? "text-gray-100" : "text-gray-900"}`}>
 //                 {title}
 //               </div>
 
-//               {/* Properties - Only show properties with values */}
+//               {/* Properties */}
 //               <div className="mt-3 space-y-2 text-sm">
 //                 {properties
 //                   .filter((p) => {
@@ -151,30 +156,29 @@
 //                     const text = renderValue(p, v);
 //                     return text && text.trim() !== "";
 //                   })
-//                   .slice(0, 4) // Show max 4 properties
+//                   .slice(0, 4)
 //                   .map((p) => {
 //                     const v = it.values?.[p._id];
 //                     const text = renderValue(p, v);
 
 //                     return (
 //                       <div key={p._id} className="flex items-start gap-2">
-//                         <div className="text-gray-500 w-[90px] shrink-0 truncate text-xs">
+//                         <div className={`w-[90px] shrink-0 truncate text-xs ${isDark ? "text-gray-500" : "text-gray-500"}`}>
 //                           {p.name}:
 //                         </div>
-//                         <div className="text-gray-900 font-medium line-clamp-2 flex-1">
+//                         <div className={`font-medium line-clamp-2 flex-1 ${isDark ? "text-gray-300" : "text-gray-900"}`}>
 //                           {text}
 //                         </div>
 //                       </div>
 //                     );
 //                   })}
 
-//                 {/* If no properties have values */}
 //                 {!properties.some((p) => {
 //                   const v = it.values?.[p._id];
 //                   const text = renderValue(p, v);
 //                   return text && text.trim() !== "";
 //                 }) && (
-//                   <div className="text-gray-400 text-xs italic mt-2">
+//                   <div className={`text-xs italic mt-2 ${isDark ? "text-gray-600" : "text-gray-400"}`}>
 //                     Click to add details
 //                   </div>
 //                 )}
@@ -208,12 +212,21 @@
 //     </div>
 //   );
 // }
+
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useTheme } from "next-themes";
+
 import AddPropertyModal from "./AddPropertyModal";
 import GalleryItemModal from "./GalleryItemModal";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+
+import { Plus } from "lucide-react";
 
 type Property = {
   _id: string;
@@ -231,9 +244,6 @@ type Item = {
 };
 
 export default function GalleryView({ databaseId }: { databaseId: string }) {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
-
   const [properties, setProperties] = useState<Property[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -263,13 +273,14 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
   const cardProps = useMemo(() => properties.slice(1, 5), [properties]);
 
   const createItem = async () => {
-    await fetch("/api/items", {
+    const res = await fetch("/api/items", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ databaseId, values: {} }),
     });
 
-    fetchAll();
+    const created = await res.json();
+    setItems((prev) => [created, ...prev]);
   };
 
   const handleCardClick = (item: Item) => {
@@ -300,104 +311,101 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
     return String(value);
   };
 
-  if (loading) {
-    return (
-      <div className={`p-6 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-        Loading gallery...
-      </div>
-    );
-  }
+  if (loading) return <div className="p-6 text-sm">Loading gallery...</div>;
 
   return (
-    <div className={`rounded-2xl border overflow-hidden ${isDark ? "bg-[#18191d] border-gray-800" : "bg-white border-gray-200"}`}>
-      {/* HEADER */}
-      <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-        <div className={`font-semibold ${isDark ? "text-gray-100" : "text-gray-900"}`}>
-          Gallery
-        </div>
+    <Card className="overflow-hidden">
+      {/* Header */}
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Gallery</CardTitle>
 
         <div className="flex gap-2">
-          <button
+          <Button
+            size="sm"
+            variant="outline"
             onClick={() => setShowAddProperty(true)}
-            className={`px-3 py-1.5 rounded-lg border text-sm ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
           >
             + Property
-          </button>
+          </Button>
 
-          <button
-            onClick={createItem}
-            className={`px-3 py-1.5 rounded-lg border text-sm ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
-          >
-            + New
-          </button>
+          <Button size="sm" onClick={createItem}>
+            <Plus className="mr-2 h-4 w-4" />
+            New
+          </Button>
         </div>
-      </div>
+      </CardHeader>
 
-      {/* CARDS GRID */}
-      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.length === 0 && (
-          <div className={`col-span-full text-center py-12 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-            <div className="text-4xl mb-2">📦</div>
-            <div className="text-lg">No items yet</div>
-            <div className="text-sm mt-1">Click "+ New" to create your first card</div>
-          </div>
-        )}
+      <Separator />
 
-        {items.map((it) => {
-          const title = it.title || "Untitled";
-
-          return (
-            <div
-              key={it._id}
-              onClick={() => handleCardClick(it)}
-              className={`rounded-xl border shadow-sm hover:shadow-md transition p-4 cursor-pointer ${isDark ? "bg-[#1e1f23] border-gray-700 hover:bg-[#252730]" : "bg-white border-gray-200 hover:bg-gray-50"}`}
-            >
-              {/* Title */}
-              <div className={`text-base font-semibold line-clamp-2 ${isDark ? "text-gray-100" : "text-gray-900"}`}>
-                {title}
-              </div>
-
-              {/* Properties */}
-              <div className="mt-3 space-y-2 text-sm">
-                {properties
-                  .filter((p) => {
-                    const v = it.values?.[p._id];
-                    const text = renderValue(p, v);
-                    return text && text.trim() !== "";
-                  })
-                  .slice(0, 4)
-                  .map((p) => {
-                    const v = it.values?.[p._id];
-                    const text = renderValue(p, v);
-
-                    return (
-                      <div key={p._id} className="flex items-start gap-2">
-                        <div className={`w-[90px] shrink-0 truncate text-xs ${isDark ? "text-gray-500" : "text-gray-500"}`}>
-                          {p.name}:
-                        </div>
-                        <div className={`font-medium line-clamp-2 flex-1 ${isDark ? "text-gray-300" : "text-gray-900"}`}>
-                          {text}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                {!properties.some((p) => {
-                  const v = it.values?.[p._id];
-                  const text = renderValue(p, v);
-                  return text && text.trim() !== "";
-                }) && (
-                  <div className={`text-xs italic mt-2 ${isDark ? "text-gray-600" : "text-gray-400"}`}>
-                    Click to add details
-                  </div>
-                )}
+      {/* Grid */}
+      <CardContent className="p-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.length === 0 && (
+            <div className="col-span-full py-14 text-center text-muted-foreground">
+              <div className="text-4xl mb-2">📦</div>
+              <div className="text-lg font-medium">No items yet</div>
+              <div className="text-sm mt-1">
+                Click “New” to create your first card
               </div>
             </div>
-          );
-        })}
-      </div>
+          )}
 
-      {/* ADD PROPERTY MODAL */}
+          {items.map((it) => {
+            const title = it.title || "Untitled";
+
+            const filledProps = properties
+              .filter((p) => {
+                const v = it.values?.[p._id];
+                const text = renderValue(p, v);
+                return text && text.trim() !== "";
+              })
+              .slice(0, 4);
+
+            return (
+              <Card
+                key={it._id}
+                onClick={() => handleCardClick(it)}
+                className="cursor-pointer hover:bg-muted/40 transition"
+              >
+                <CardContent className="p-4 space-y-3">
+                  {/* Title */}
+                  <div className="text-base font-semibold line-clamp-2">
+                    {title}
+                  </div>
+
+                  {/* Props */}
+                  <div className="space-y-2 text-sm">
+                    {filledProps.map((p) => {
+                      const v = it.values?.[p._id];
+                      const text = renderValue(p, v);
+
+                      return (
+                        <div key={p._id} className="flex items-start gap-2">
+                          <Badge variant="secondary" className="shrink-0">
+                            {p.name}
+                          </Badge>
+
+                          <div className="font-medium line-clamp-2 text-muted-foreground">
+                            {text}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {filledProps.length === 0 && (
+                      <div className="text-xs italic text-muted-foreground">
+                        Click to add details
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </CardContent>
+
+      {/* Add property modal */}
       {showAddProperty && (
         <AddPropertyModal
           isOpen={showAddProperty}
@@ -407,7 +415,7 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
         />
       )}
 
-      {/* EDIT ITEM MODAL */}
+      {/* Edit item modal */}
       {showItemModal && selectedItem && (
         <GalleryItemModal
           isOpen={showItemModal}
@@ -418,6 +426,6 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
           onSaved={fetchAll}
         />
       )}
-    </div>
+    </Card>
   );
 }

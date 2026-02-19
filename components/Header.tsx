@@ -2,7 +2,17 @@
 
 import React from 'react';
 import { useTheme } from 'next-themes';
-import { Search, Mic, Bell, Inbox, ChevronDown } from 'lucide-react';
+import { Search, Mic, Bell, Inbox, ChevronDown, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function Header() {
   const { resolvedTheme } = useTheme();
@@ -16,9 +26,9 @@ export default function Header() {
 
         {/* Left Section - Project Info */}
         <div className="flex flex-col ml-14 gap-1">
-          <div className="flex items-center   gap-3">
+          <div className="flex items-center gap-3">
             <div className="w-4 h-4 rounded-full border-2 border-[#6366f1]"></div>
-            <div className={`font-semibold  text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>Team Project</div>
+            <div className={`font-semibold text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>Team Project</div>
 
             {/* Avatars */}
             <div className="flex -space-x-2 ml-2">
@@ -26,14 +36,16 @@ export default function Header() {
                 <div key={i} className={`w-6 h-6 rounded-full bg-gray-${i * 100 + 400} border-2 
                   ${isDark ? 'border-[#0F1014]' : 'border-rose-50'}`}></div>
               ))}
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[8px] 
-                ${isDark ? 'bg-[#1F2125] border-[#0F1014] text-gray-400' : 'bg-gray-200 border-rose-50 text-gray-600'}`}>+4</div>
+              <Badge variant="outline" className={`w-6 h-6 rounded-full flex items-center justify-center text-[8px] p-0 
+                ${isDark ? 'bg-[#1F2125] border-[#0F1014] text-gray-400' : 'bg-gray-200 border-rose-50 text-gray-600'}`}>
+                +4
+              </Badge>
             </div>
 
-            <button className={`w-6 h-6 rounded-full border border-dashed flex items-center justify-center text-xs ml-1 transition-colors
+            <Button variant="ghost" size="icon" className={`w-6 h-6 rounded-full border border-dashed
               ${isDark ? 'border-gray-600 text-gray-400 hover:text-white' : 'border-gray-400 text-gray-500 hover:text-gray-900'}`}>
-              +
-            </button>
+              <Plus className="h-3 w-3" />
+            </Button>
           </div>
 
           <div className="relative pl-2 flex items-center">
@@ -49,10 +61,10 @@ export default function Header() {
           <div className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors
             ${isDark ? 'bg-[#18191d] border-transparent' : 'bg-white border-rose-200'}`}>
             <Search size={16} className="text-gray-400" />
-            <input
+            <Input
               type="text"
               placeholder="Type to search"
-              className={`bg-transparent text-sm flex-1 outline-none ${isDark ? 'text-gray-200' : 'text-gray-900'}`}
+              className={`bg-transparent text-sm border-0 h-auto p-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${isDark ? 'text-gray-200' : 'text-gray-900'}`}
             />
             <Mic size={16} className="text-gray-400" />
           </div>
@@ -61,30 +73,39 @@ export default function Header() {
         {/* Right Section - Actions */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3 text-gray-400">
-            <button className={`cursor-pointer transition p-2 rounded-full relative
+            <Button variant="ghost" size="icon" className={`rounded-full relative
               ${isDark ? 'hover:bg-white/5 hover:text-white' : 'hover:bg-rose-200/50 hover:text-gray-900'}`}>
               <Bell size={20} />
               <div className={`absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border 
                 ${isDark ? 'border-[#0F1014]' : 'border-white'}`}></div>
-            </button>
-            <button className={`cursor-pointer transition p-2 rounded-lg border 
+            </Button>
+
+            <Button variant="outline" size="icon" className={`
               ${isDark ? 'border-gray-700 hover:bg-white/5 hover:text-white' : 'border-rose-200 hover:bg-rose-200/50 hover:text-gray-900'}`}>
               <Inbox size={20} />
-            </button>
+            </Button>
 
-            <button className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border 
+            <Button variant="outline" size="sm" className={`
               ${isDark ? 'bg-[#1F2125] hover:bg-[#2a2c30] text-gray-300 border-transparent' : 'bg-white hover:bg-rose-50 text-gray-700 border-rose-200'}`}>
               Share
-            </button>
+            </Button>
 
-            <div className={`flex items-center rounded-lg border ${isDark ? 'bg-[#1F2125] border-gray-800' : 'bg-white border-rose-200'}`}>
-              <button className={`px-3 py-2 text-sm border-r transition-colors
-                ${isDark ? 'text-gray-300 hover:text-white border-gray-800' : 'text-gray-700 hover:text-gray-900 border-rose-200'}`}>Link</button>
-              <button className={`px-2 py-2 transition-colors
-                ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}>
-                <ChevronDown size={14} />
-              </button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className={`gap-0 px-0 overflow-hidden
+                  ${isDark ? 'bg-[#1F2125] border-gray-800' : 'bg-white border-rose-200'}`}>
+                  <span className={`px-3 border-r ${isDark ? 'border-gray-800' : 'border-rose-200'}`}>Link</span>
+                  <span className="px-2">
+                    <ChevronDown size={14} />
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Copy Link</DropdownMenuItem>
+                <DropdownMenuItem>Share via Email</DropdownMenuItem>
+                <DropdownMenuItem>Generate QR Code</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
 import ViewPickerCard from "./ViewpickerCard";
 
 export default function CreateDatabasePopover({
@@ -21,10 +22,10 @@ export default function CreateDatabasePopover({
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild>
-        <button className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}>
+        <Button variant="outline" className={`gap-2 ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}>
           <Plus size={16} />
           <span className="text-sm font-semibold">New Database</span>
-        </button>
+        </Button>
       </Popover.Trigger>
 
       <Popover.Portal>

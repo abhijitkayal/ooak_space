@@ -1,6 +1,8 @@
+
 // "use client";
 
 // import { useState } from "react";
+// import { useTheme } from "next-themes";
 // import PropertyTypePicker from "./PropertyTypepicker";
 
 // export default function AddPropertyModal({
@@ -14,6 +16,9 @@
 //   databaseId: string;
 //   onSaved: () => void;
 // }) {
+//   const { resolvedTheme } = useTheme();
+//   const isDark = resolvedTheme === "dark";
+
 //   const [name, setName] = useState("");
 //   const [type, setType] = useState("text");
 
@@ -40,13 +45,15 @@
 //   };
 
 //   return (
-//     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
-//       <div className="w-full max-w-md bg-white rounded-2xl border shadow-xl p-4">
-//         <div className="font-semibold text-lg">Add property</div>
+//     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+//       <div className={`w-full max-w-md rounded-2xl border shadow-xl p-4 ${isDark ? "bg-[#1e1f23] border-gray-700" : "bg-white border-gray-200"}`}>
+//         <div className={`font-semibold text-lg ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+//           Add property
+//         </div>
 
 //         <div className="mt-4 space-y-3">
 //           <input
-//             className="w-full border rounded-lg px-3 py-2 outline-none"
+//             className={`w-full border rounded-lg px-3 py-2 outline-none text-sm ${isDark ? "bg-[#18191d] border-gray-700 text-gray-100 placeholder-gray-500 focus:border-gray-500" : "bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-gray-400"}`}
 //             placeholder="Property name"
 //             value={name}
 //             onChange={(e) => setName(e.target.value)}
@@ -57,14 +64,14 @@
 //           <div className="flex gap-2 justify-end pt-2">
 //             <button
 //               onClick={onClose}
-//               className="px-3 py-2 rounded-lg border text-sm"
+//               className={`px-3 py-2 rounded-lg border text-sm ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
 //             >
 //               Cancel
 //             </button>
 
 //             <button
 //               onClick={createProperty}
-//               className="px-3 py-2 rounded-lg bg-black text-white text-sm"
+//               className={`px-3 py-2 rounded-lg text-sm font-medium ${isDark ? "bg-white text-gray-900 hover:bg-gray-200" : "bg-black text-white hover:bg-gray-800"}`}
 //             >
 //               Create
 //             </button>
@@ -74,11 +81,24 @@
 //     </div>
 //   );
 // }
+
 "use client";
 
 import { useState } from "react";
-import { useTheme } from "next-themes";
+
 import PropertyTypePicker from "./PropertyTypepicker";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 export default function AddPropertyModal({
   isOpen,
@@ -91,13 +111,8 @@ export default function AddPropertyModal({
   databaseId: string;
   onSaved: () => void;
 }) {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
-
   const [name, setName] = useState("");
   const [type, setType] = useState("text");
-
-  if (!isOpen) return null;
 
   const createProperty = async () => {
     if (!name.trim()) return;
@@ -120,39 +135,43 @@ export default function AddPropertyModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-      <div className={`w-full max-w-md rounded-2xl border shadow-xl p-4 ${isDark ? "bg-[#1e1f23] border-gray-700" : "bg-white border-gray-200"}`}>
-        <div className={`font-semibold text-lg ${isDark ? "text-gray-100" : "text-gray-900"}`}>
-          Add property
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add property</DialogTitle>
+        </DialogHeader>
 
-        <div className="mt-4 space-y-3">
-          <input
-            className={`w-full border rounded-lg px-3 py-2 outline-none text-sm ${isDark ? "bg-[#18191d] border-gray-700 text-gray-100 placeholder-gray-500 focus:border-gray-500" : "bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-gray-400"}`}
-            placeholder="Property name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+        <Separator />
 
-          <PropertyTypePicker value={type} onChange={setType} />
+        <div className="space-y-4">
+          {/* Name */}
+          <div className="space-y-2">
+            <Label>Property name</Label>
+            <Input
+              placeholder="Property name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
 
-          <div className="flex gap-2 justify-end pt-2">
-            <button
-              onClick={onClose}
-              className={`px-3 py-2 rounded-lg border text-sm ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
-            >
+          {/* Type Picker (your component) */}
+          <div className="space-y-2">
+            <Label>Type</Label>
+            <PropertyTypePicker value={type} onChange={setType} />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={onClose}>
               Cancel
-            </button>
+            </Button>
 
-            <button
-              onClick={createProperty}
-              className={`px-3 py-2 rounded-lg text-sm font-medium ${isDark ? "bg-white text-gray-900 hover:bg-gray-200" : "bg-black text-white hover:bg-gray-800"}`}
-            >
+            <Button onClick={createProperty} disabled={!name.trim()}>
               Create
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

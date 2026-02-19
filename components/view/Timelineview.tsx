@@ -1,6 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Card, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronLeft, ChevronRight, ChevronDown, Plus } from "lucide-react";
 
 type TimelineItem = {
   _id: string;
@@ -82,43 +93,67 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
   const GRID_WIDTH = totalDays * DAY_COL_WIDTH;
 
   if (loading) {
-    return <div className="p-6 text-sm text-gray-600">Loading timeline...</div>;
+    return (
+      <Card className="p-6">
+        <p className="text-sm text-muted-foreground">Loading timeline...</p>
+      </Card>
+    );
   }
 
   return (
-    <div className="rounded-2xl border bg-white overflow-hidden">
+    <Card className="overflow-hidden">
       {/* ======= HEADER (like Notion) ======= */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
+      <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-3">
-          <button className="text-gray-500 hover:text-gray-800">»</button>
-          <div className="font-semibold">{formatMonthYear(monthStart)}</div>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <h2 className="font-semibold text-base">{formatMonthYear(monthStart)}</h2>
         </div>
 
         <div className="flex items-center gap-4 text-sm">
-          <button className="px-3 py-1.5 rounded-lg border hover:bg-gray-50 font-semibold">
+          <Button variant="outline" size="sm">
             Manage in Calendar
-          </button>
+          </Button>
 
-          <div className="flex items-center gap-1 text-gray-500">
-            <span>Month</span>
-            <span>▾</span>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-1">
+                Month
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Day</DropdownMenuItem>
+              <DropdownMenuItem>Week</DropdownMenuItem>
+              <DropdownMenuItem>Month</DropdownMenuItem>
+              <DropdownMenuItem>Year</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-          <div className="flex items-center gap-2 text-gray-500">
-            <button className="hover:text-gray-800">‹</button>
-            <button className="hover:text-gray-800">Today</button>
-            <button className="hover:text-gray-800">›</button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm">
+              Today
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </div>
+      </CardHeader>
+
+      <Separator />
 
       {/* ======= GRID ======= */}
-      <div className="relative overflow-x-auto">
+      <ScrollArea className="w-full">
         <div style={{ minWidth: GRID_WIDTH + 260 }}>
           {/* Top Day Row */}
           <div className="flex border-b">
             {/* left empty column like Notion */}
-            <div className="w-[260px] shrink-0 bg-white" />
+            <div className="w-[260px] shrink-0 bg-background" />
 
             <div
               className="relative"
@@ -129,7 +164,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                 {Array.from({ length: totalDays }).map((_, i) => (
                   <div
                     key={i}
-                    className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    className={i % 2 === 0 ? "bg-background" : "bg-muted/30"}
                     style={{ width: DAY_COL_WIDTH }}
                   />
                 ))}
@@ -147,14 +182,14 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                   return (
                     <div
                       key={i}
-                      className="flex items-center justify-center text-sm text-gray-500"
+                      className="flex items-center justify-center text-sm text-muted-foreground"
                       style={{ width: DAY_COL_WIDTH }}
                     >
                       <div
-                        className={`w-9 h-9 flex items-center justify-center rounded-full ${
+                        className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${
                           isToday
                             ? "bg-red-500 text-white font-bold"
-                            : "hover:bg-gray-100"
+                            : "hover:bg-muted"
                         }`}
                       >
                         {dayNum}
@@ -179,15 +214,15 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
           {/* Body rows */}
           <div className="relative flex">
             {/* left side column */}
-            <div className="w-[260px] shrink-0 border-r bg-white">
+            <div className="w-[260px] shrink-0 border-r bg-background">
               {/* empty spacing for items */}
               <div style={{ height: items.length * ROW_HEIGHT }} />
 
               {/* + New */}
-              <button className="flex items-center gap-2 px-4 py-4 text-gray-500 hover:text-gray-800">
-                <span className="text-xl">+</span>
-                <span className="text-base">New</span>
-              </button>
+              <Button variant="ghost" className="w-full justify-start gap-2 px-4 py-4">
+                <Plus className="h-5 w-5" />
+                <span>New</span>
+              </Button>
             </div>
 
             {/* timeline canvas */}
@@ -203,7 +238,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                 {Array.from({ length: totalDays }).map((_, i) => (
                   <div
                     key={i}
-                    className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    className={i % 2 === 0 ? "bg-background" : "bg-muted/30"}
                     style={{ width: DAY_COL_WIDTH }}
                   />
                 ))}
@@ -212,7 +247,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
               {/* today red vertical line */}
               {todayOffset >= 0 && todayOffset <= totalDays && (
                 <div
-                  className="absolute top-0 bottom-0 w-[2px] bg-red-500/70"
+                  className="absolute top-0 bottom-0 w-0.5 bg-red-500/70"
                   style={{
                     left: `calc(${todayPercent}% - 1px)`,
                   }}
@@ -239,31 +274,31 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                         height: ROW_HEIGHT,
                       }}
                     >
-                      <div
-                        className="absolute top-[10px] h-[44px] rounded-xl border bg-white shadow-sm flex items-center px-4 font-semibold text-gray-800"
+                      <Button
+                        variant="outline"
+                        className="absolute top-2.5 h-11 justify-between font-semibold"
                         style={{
                           left: leftPx,
                           width: widthPx,
                         }}
                       >
-                        {it.title}
+                        <span>{it.title}</span>
 
                         {/* small handle circle (like Notion) */}
-                        <div className="ml-auto flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-gray-300" />
-                        </div>
-                      </div>
+                        <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+                      </Button>
                     </div>
                   );
                 })}
               </div>
 
               {/* bottom scrollbar fake bar look */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[120px] h-2 rounded-full bg-gray-300/60" />
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[120px] h-2 rounded-full bg-muted-foreground/20" />
             </div>
           </div>
         </div>
-      </div>
-    </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    </Card>
   );
 }

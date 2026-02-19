@@ -1,9 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import AddPropertyModal from "./AddPropertyModal";
 import TableHeaderCell from "./TableHeadercell";
 import TableCell from "./TableCell";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+import { Plus } from "lucide-react";
 
 export default function TableView({ databaseId }: { databaseId: string }) {
   const [properties, setProperties] = useState<any[]>([]);
@@ -28,91 +36,98 @@ export default function TableView({ databaseId }: { databaseId: string }) {
   }, [databaseId]);
 
   const addRow = async () => {
-    await fetch("/api/items", {
+    const res = await fetch("/api/items", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ databaseId }),
     });
 
-    fetchRows();
+    const created = await res.json();
+    setRows((prev) => [...prev, created]);
   };
 
   return (
-    <div className="border rounded-2xl overflow-hidden bg-white">
-      {/* header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
-        <div className="font-semibold">Table</div>
+    <Card className="overflow-hidden">
+      {/* Header */}
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Table</CardTitle>
 
         <div className="flex gap-2">
-          <button
+          <Button
+            size="sm"
+            variant="outline"
             onClick={() => setOpenModal(true)}
-            className="px-3 py-1.5 rounded-lg border hover:bg-gray-50 text-sm"
           >
             + Property
-          </button>
+          </Button>
 
-          <button
-            onClick={addRow}
-            className="px-3 py-1.5 rounded-lg border hover:bg-gray-50 text-sm"
-          >
-            + Row
-          </button>
+          <Button size="sm" variant="outline" onClick={addRow}>
+            <Plus className="mr-2 h-4 w-4" />
+            Row
+          </Button>
         </div>
-      </div>
+      </CardHeader>
 
-      {/* grid */}
-      <div className="overflow-auto">
-        <div className="min-w-[900px]">
-          {/* columns */}
-          <div className="flex border-b bg-gray-50">
-            <div className="w-[60px] shrink-0 px-3 py-2 text-xs text-gray-500 border-r">
-              #
-            </div>
+      <Separator />
 
-            {properties.map((p) => (
-              <TableHeaderCell
-                key={p._id}
-                property={p}
-                refresh={fetchProperties}
-              />
-            ))}
-          </div>
-
-          {/* rows */}
-          {rows.map((row, index) => (
-            <div key={row._id} className="flex border-b">
-              <div className="w-[60px] shrink-0 px-3 py-2 text-xs text-gray-500 border-r">
-                {index + 1}
+      {/* Table Grid */}
+      <CardContent className="p-0">
+        <ScrollArea className="w-full">
+          <div className="min-w-[900px]">
+            {/* Columns */}
+            <div className="flex border-b bg-muted/40">
+              <div className="w-[60px] shrink-0 px-3 py-2 text-xs text-muted-foreground border-r">
+                #
               </div>
 
               {properties.map((p) => (
-                <TableCell
+                <TableHeaderCell
                   key={p._id}
-                  row={row}
                   property={p}
-                  refreshRows={fetchRows}
+                  refresh={fetchProperties}
                 />
               ))}
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* footer add row */}
-      <button
-        onClick={addRow}
-        className="w-full text-left px-4 py-3 text-sm text-gray-500 hover:bg-gray-50"
-      >
-        + New
-      </button>
+            {/* Rows */}
+            {rows.map((row, index) => (
+              <div key={row._id} className="flex border-b">
+                <div className="w-[60px] shrink-0 px-3 py-2 text-xs text-muted-foreground border-r">
+                  {index + 1}
+                </div>
 
-      {/* modal */}
+                {properties.map((p) => (
+                  <TableCell
+                    key={p._id}
+                    row={row}
+                    property={p}
+                    refreshRows={fetchRows}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+
+        <Separator />
+
+        {/* Footer Add Row */}
+        <Button
+          variant="ghost"
+          className="w-full justify-start rounded-none px-4 py-6 text-muted-foreground"
+          onClick={addRow}
+        >
+          + New
+        </Button>
+      </CardContent>
+
+      {/* Add Property Modal */}
       <AddPropertyModal
         isOpen={openModal}
         onClose={() => setOpenModal(false)}
         databaseId={databaseId}
         onSaved={fetchProperties}
       />
-    </div>
+    </Card>
   );
 }

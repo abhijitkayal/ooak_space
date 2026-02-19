@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { ExternalLink, Plus, MoreHorizontal } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 
 export default function LastProjects() {
   const { resolvedTheme } = useTheme();
@@ -31,23 +34,24 @@ export default function LastProjects() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <h3 className="text-xl font-semibold tracking-tight">Last Projects</h3>
-          <span className={`text-xs font-medium px-2.5 py-1 rounded-full border 
+          <Badge variant="outline" className={`
             ${isDark ? 'bg-[#1F2125] text-gray-400 border-white/10' : 'bg-rose-100 text-gray-600 border-rose-200'}`}>
             2
-          </span>
+          </Badge>
         </div>
-        <a
-          href="#"
-          className={`flex items-center gap-2 text-sm font-medium transition-colors group
+        <Button variant="ghost" size="sm" className={`gap-2 group
             ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-500'}`}
+          asChild
         >
-          <ExternalLink size={14} className="group-hover:-translate-y-0.5 transition-transform" />
-          <span>View on Figma</span>
-        </a>
+          <a href="#">
+            <ExternalLink size={14} className="group-hover:-translate-y-0.5 transition-transform" />
+            <span>View on Figma</span>
+          </a>
+        </Button>
       </div>
 
       {/* Main Card */}
-      <div className={`rounded-[32px] p-6 border transition-colors duration-300 shadow-sm 
+      <Card className={`rounded-[32px] p-6 transition-colors duration-300 shadow-sm 
         ${isDark ? 'bg-[#1F2125] border-white/5 shadow-none' : 'bg-white border-rose-200'}`}>
 
         {/* Card Header Info */}
@@ -71,10 +75,10 @@ export default function LastProjects() {
                 </div>
               ))}
             </div>
-            <button className={`w-9 h-9 rounded-full border border-dashed flex items-center justify-center transition-all
+            <Button variant="outline" size="icon" className={`w-9 h-9 rounded-full border-dashed
               ${isDark ? 'border-zinc-600 text-zinc-500 hover:text-white hover:border-zinc-400' : 'border-gray-300 text-gray-400 hover:text-gray-900 hover:border-gray-400'}`}>
               <Plus size={16} />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -202,7 +206,7 @@ export default function LastProjects() {
 
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
