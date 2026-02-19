@@ -382,7 +382,7 @@ export default function BoardView({ databaseId }: { databaseId: string }) {
         "In Progress";
 
       const safe = BOARD_COLUMNS.includes(raw) ? raw : "In Progress";
-      map[safe].push(it);
+      map[safe as typeof BOARD_COLUMNS[number]].push(it);
     }
 
     return map;

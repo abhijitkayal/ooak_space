@@ -4,13 +4,14 @@ import TodoProperty from "@/lib/models/TodoProperty";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
   const body = await req.json();
+  const { id } = await params;
 
   const updated = await TodoProperty.findByIdAndUpdate(
-    params.id,
+    id,
     { $set: body },
     { new: true }
   );
@@ -20,11 +21,12 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
+  const { id } = await params;
 
-  await TodoProperty.findByIdAndDelete(params.id);
+  await TodoProperty.findByIdAndDelete(id);
 
   return NextResponse.json({ success: true });
 }

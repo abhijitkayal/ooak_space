@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
   const last = await BulletedListBlock.findOne({ databaseId: body.databaseId })
     .sort({ order: -1 })
-    .lean();
+    .lean() as { order: number } | null;
 
   const nextOrder = last ? last.order + 1 : 1;
 

@@ -60,18 +60,20 @@ export default function TaskCard({
   const title = titleProp ? item.values?.[titleProp._id] : "Untitled";
 
   return (
-    <Card
+    <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
       className="cursor-grab active:cursor-grabbing"
     >
-      <CardContent className="p-3">
-        <div className="text-sm font-semibold line-clamp-2">
-          {title || "Untitled"}
-        </div>
-      </CardContent>
-    </Card>
+      <Card>
+        <CardContent className="p-3">
+          <div className="text-sm font-semibold line-clamp-2">
+            {title || "Untitled"}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

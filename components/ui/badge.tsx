@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "default" | "outline" | "success" | "destructive";
+  variant?: "default" | "secondary" | "outline" | "success" | "destructive";
 }
 
 export function Badge({
@@ -16,6 +16,8 @@ export function Badge({
       className={cn(
         "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
         "bg-[color-mix(in_oklab,var(--background),black_12%)] border-border/40 text-foreground/80",
+        variant === "secondary" &&
+          "bg-[color-mix(in_oklab,var(--background),black_12%)] border-border/40 text-foreground/80",
         variant === "outline" &&
           "bg-transparent border-border/50 text-foreground/80",
         variant === "success" &&

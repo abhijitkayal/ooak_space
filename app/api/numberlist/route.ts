@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   // find last order
   const last = await NumberListBlock.findOne({ databaseId: body.databaseId })
     .sort({ order: -1 })
-    .lean();
+    .lean() as { order: number } | null;
 
   const nextOrder = last ? last.order + 1 : 1;
 

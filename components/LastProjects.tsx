@@ -39,15 +39,11 @@ export default function LastProjects() {
             2
           </Badge>
         </div>
-        <Button variant="ghost" size="sm" className={`gap-2 group
-            ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-500'}`}
-          asChild
-        >
-          <a href="#">
-            <ExternalLink size={14} className="group-hover:-translate-y-0.5 transition-transform" />
-            <span>View on Figma</span>
-          </a>
-        </Button>
+        <a href="#" className={`flex items-center gap-2 text-sm group
+            ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-500'}`}>
+          <ExternalLink size={14} className="group-hover:-translate-y-0.5 transition-transform" />
+          <span>View on Figma</span>
+        </a>
       </div>
 
       {/* Main Card */}

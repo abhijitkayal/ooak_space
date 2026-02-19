@@ -4,11 +4,11 @@ import DatabaseItem from "@/lib/models/DatabaseItem";
 
 export async function PATCH(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
 
-  const { id } = context.params;
+  const { id } = await context.params;
   const body = await req.json();
 
   const updated = await DatabaseItem.findByIdAndUpdate(

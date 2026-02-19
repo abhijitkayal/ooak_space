@@ -396,7 +396,7 @@ export default function CalendarView({ view, setView }: CalendarViewProps) {
                         {view === 'Board' || view === 'task-board' ? (
                             <BoardView />
                         ) : view === 'Timeline' ? (
-                            <TimelineView />
+                            <TimelineView databaseId="" />
                         ) : view === 'Table' ? (
                             <TableView />
                         ) : view === 'activities' ? (
