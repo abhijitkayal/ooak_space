@@ -11,7 +11,8 @@ export type ColumnType =
   | "checkbox"
   | "url"
   | "email"
-  | "phone";
+  | "phone"
+  | "formula";
 
 export type Column = {
   _id: string;
@@ -20,6 +21,7 @@ export type Column = {
   type: ColumnType;
   options: { label: string; color: string }[];
   order: number;
+  formula?: string;
 };
 
 export type Row = {
@@ -33,6 +35,7 @@ export type Row = {
 type Store = {
   columns: Column[];
   rows: Row[];
+  formulaColumn: Column | null;
 
   fetchColumns: (databaseId: string) => Promise<void>;
   fetchRows: (databaseId: string) => Promise<void>;
@@ -41,11 +44,15 @@ type Store = {
   addRow: (databaseId: string) => Promise<void>;
 
   updateCell: (rowId: string, columnId: string, value: any) => Promise<void>;
+  setFormulaColumn: (column: Column | null) => void;
+  updateColumn: (columnId: string, updates: Partial<Column>) => Promise<void>;
 };
+
 
 export const useTableStore = create<Store>((set, get) => ({
   columns: [],
   rows: [],
+  formulaColumn: null,
 
   fetchColumns: async (databaseId) => {
     const res = await fetch(`/api/columns?databaseId=${databaseId}`);
@@ -102,6 +109,23 @@ export const useTableStore = create<Store>((set, get) => ({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rowId, columnId, value }),
+    });
+  },
+
+  setFormulaColumn: (column) => {
+    set({ formulaColumn: column });
+  },
+
+  updateColumn: async (columnId, updates) => {
+    const updatedColumns = get().columns.map((c) =>
+      c._id === columnId ? { ...c, ...updates } : c
+    );
+    set({ columns: updatedColumns });
+
+    await fetch(`/api/columns/${columnId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
     });
   },
 }));

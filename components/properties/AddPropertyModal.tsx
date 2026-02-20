@@ -17,6 +17,7 @@ export default function AddPropertyModal({
   const [name, setName] = useState("");
   const [type, setType] = useState("text");
   const [optionsText, setOptionsText] = useState("");
+  const [formula, setFormula] = useState("");
 
   if (!isOpen) return null;
 
@@ -39,12 +40,14 @@ export default function AddPropertyModal({
         name,
         type,
         options,
+        formula: type === "formula" ? formula : undefined,
       }),
     });
 
     setName("");
     setType("text");
     setOptionsText("");
+    setFormula("");
     onSaved();
     onClose();
   };
@@ -71,6 +74,20 @@ export default function AddPropertyModal({
               value={optionsText}
               onChange={(e) => setOptionsText(e.target.value)}
             />
+          )}
+
+          {type === "formula" && (
+            <div>
+              <textarea
+                className="w-full border rounded-lg px-3 py-2 outline-none resize-none h-24"
+                placeholder="Enter formula (e.g., columnA + columnB)"
+                value={formula}
+                onChange={(e) => setFormula(e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Formula properties are read-only and auto-calculated
+              </p>
+            </div>
           )}
 
           <div className="flex gap-2 justify-end pt-2">

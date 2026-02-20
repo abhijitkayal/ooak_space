@@ -8,7 +8,10 @@ const TYPES = [
   { label: "Date", value: "date" },
   { label: "Checkbox", value: "checkbox" },
   { label: "URL", value: "url" },
+  { label: "Email", value: "email" },
+  { label: "Phone", value: "phone" },
   { label: "Person", value: "person" },
+  { label: "Formula", value: "formula" },
 ];
 
 export default function PropertyTypePicker({
@@ -23,6 +26,7 @@ export default function PropertyTypePicker({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="w-full border rounded-lg px-3 py-2 bg-white outline-none"
+      aria-label="Property type"
     >
       {TYPES.map((t) => (
         <option key={t.value} value={t.value}>

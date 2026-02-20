@@ -148,6 +148,7 @@ const TYPES: { type: ColumnType; label: string; icon: string }[] = [
   { type: "url", label: "URL", icon: "🔗" },
   { type: "email", label: "Email", icon: "@" },
   { type: "phone", label: "Phone", icon: "📞" },
+  { type: "formula" , label: "Formula",icon:"x" },
 ];
 
 export default function ColumnTypePicker({
