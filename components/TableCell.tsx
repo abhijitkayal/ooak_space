@@ -229,23 +229,6 @@ if (col.type === "email") {
     );
   }
 
-  // email
-  if (col.type === "email") {
-    return (
-      <div className="px-3 py-2">
-        <input
-          type="email"
-          value={local}
-          onChange={(e) => setLocal(e.target.value)}
-          onBlur={save}
-          placeholder="email@example.com"
-          className={inputClass}
-          aria-label={col.name}
-        />
-      </div>
-    );
-  }
-
   // phone
   if (col.type === "phone") {
     return (
