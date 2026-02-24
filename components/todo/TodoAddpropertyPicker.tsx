@@ -16,6 +16,7 @@ const PROPERTY_TYPES = [
   { type: "date", label: "Date", icon: "📅" },
   { type: "checkbox", label: "Checkbox", icon: "☑" },
   { type: "url", label: "URL", icon: "🔗" },
+  { type: "email", label: "Email", icon: "✉" },
   { type: "person", label: "Person", icon: "👤" },
   { type: "files", label: "Files & Media", icon: "📁" },
   { type: "formula", label: "Formula", icon: "∑" },
@@ -39,6 +40,7 @@ export default function AddPropertyPicker({
   const [creating, setCreating] = useState(false);
 
   const createAndAddProperty = async (type: string, label: string) => {
+    console.log("Creating property:", type, label);
     setCreating(true);
 
     const options =
@@ -48,22 +50,41 @@ export default function AddPropertyPicker({
         ? ["Work", "Personal", "Important"]
         : [];
 
-    const res = await fetch("/api/todo/properties", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        databaseId,
-        name: label,
-        type,
-        options,
-      }),
-    });
+    try {
+      const res = await fetch("/api/todo/properties", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          databaseId,
+          name: label,
+          type,
+          options,
+        }),
+      });
 
-    const newProp = await res.json();
+      if (!res.ok) {
+        const error = await res.json();
+        console.error("Failed to create property:", error);
+        alert(`Failed to create property: ${error.error || 'Unknown error'}`);
+        setCreating(false);
+        return;
+      }
 
-    setCreating(false);
-    onPropertyCreated();
-    onPick(newProp._id);
+      const newProp = await res.json();
+      console.log("Property created successfully:", newProp);
+
+      setCreating(false);
+      
+      // Call onPropertyCreated and wait for parent to refresh
+      await onPropertyCreated();
+      
+      // Close modal after parent has refreshed
+      onClose();
+    } catch (error) {
+      console.error("Error creating property:", error);
+      alert("Failed to create property. Please try again.");
+      setCreating(false);
+    }
   };
 
   const hiddenProps = properties.filter(
@@ -71,8 +92,20 @@ export default function AddPropertyPicker({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
-      <div className="w-full max-w-md bg-white rounded-xl border shadow-xl overflow-hidden">
+    <div 
+      className="fixed inset-0 z-60 flex items-center justify-center bg-black/20"
+      onClick={() => {
+        console.log("Backdrop clicked");
+        onClose();
+      }}
+    >
+      <div 
+        className="w-full max-w-md bg-white rounded-xl border shadow-xl overflow-hidden"
+        onClick={(e) => {
+          console.log("Modal content clicked");
+          e.stopPropagation();
+        }}
+      >
         <div className="px-4 py-3 border-b">
           <div className="text-sm font-semibold">Add a property</div>
           <div className="text-xs text-gray-500 mt-1">
@@ -90,8 +123,13 @@ export default function AddPropertyPicker({
               {hiddenProps.map((p) => (
                 <button
                   key={p._id}
-                  onClick={() => onPick(p._id)}
-                  className="w-full px-4 py-2.5 text-left text-sm flex items-center justify-between hover:bg-gray-50 border-b"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("Existing property clicked:", p._id, p.name);
+                    onPick(p._id);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm flex items-center justify-between hover:bg-gray-50 border-b cursor-pointer"
                 >
                   <div className="font-medium">{p.name}</div>
                   <div className="text-xs text-gray-500 capitalize">
@@ -109,9 +147,14 @@ export default function AddPropertyPicker({
           {PROPERTY_TYPES.map(({ type, label, icon }) => (
             <button
               key={type}
-              onClick={() => createAndAddProperty(type, label)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Button clicked:", type, label);
+                createAndAddProperty(type, label);
+              }}
               disabled={creating}
-              className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 hover:bg-blue-50 border-b disabled:opacity-50"
+              className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 hover:bg-blue-50 border-b disabled:opacity-50 cursor-pointer"
             >
               <span className="text-lg w-6 text-center">{icon}</span>
               <div className="flex-1 font-medium">{label}</div>
@@ -122,8 +165,13 @@ export default function AddPropertyPicker({
 
         <div className="px-4 py-3 border-t flex justify-end">
           <button
-            onClick={onClose}
-            className="text-sm px-4 py-2 rounded-md border hover:bg-gray-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log("Close button clicked");
+              onClose();
+            }}
+            className="text-sm px-4 py-2 rounded-md border hover:bg-gray-50 cursor-pointer"
           >
             Close
           </button>

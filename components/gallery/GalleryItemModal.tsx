@@ -145,15 +145,38 @@ export default function GalleryItemModal({
           />
         );
 
-      case "email":
-        return (
-          <Input
-            type="email"
-            value={currentValue || ""}
-            onChange={(e) => handleValueChange(prop._id, e.target.value)}
-            placeholder="email@example.com"
-          />
-        );
+      case "email": {
+  const sendEmail = async (email: string) => {
+    try {
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+    } catch (err) {
+      console.error("Email send failed", err);
+    }
+  };
+
+  return (
+    <Input
+      type="email"
+      value={currentValue || ""}
+      placeholder="email@example.com"
+      onChange={(e) => handleValueChange(prop._id, e.target.value)}
+      onBlur={(e) => {
+        const email = e.target.value;
+
+        // basic validation
+        if (email && email.includes("@")) {
+          sendEmail(email); // ✅ API call
+        }
+      }}
+    />
+  );
+}
 
       case "phone":
         return (

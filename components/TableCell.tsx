@@ -57,6 +57,56 @@ export default function TableCell({ row, col }: { row: Row; col: Column }) {
       </div>
     );
   }
+  // email
+if (col.type === "email") {
+
+  const sendEmail = async (email: string) => {
+    try {
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+    } catch (err) {
+      console.error("Email send failed", err);
+    }
+  };
+
+  const handleBlur = async () => {
+    await save(); // save to DB
+
+    if (local) {
+      await sendEmail(local); // ✅ API CALL HERE
+    }
+  };
+
+  return (
+    <div className="px-3 py-2 space-y-1">
+      <input
+        type="email"
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={handleBlur} // ✅ trigger here
+        placeholder="email@example.com"
+        className={inputClass}
+        aria-label={col.name}
+      />
+
+      {value && (
+        <button
+          onClick={() => sendEmail(value)}
+          className={`text-xs ${
+            isDark ? "text-blue-400" : "text-blue-600"
+          } hover:underline`}
+        >
+          Send Email →
+        </button>
+      )}
+    </div>
+  );
+}
 
   // number
   if (col.type === "number") {

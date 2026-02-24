@@ -7,6 +7,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 
 import { Input } from "@/components/ui/input";
@@ -66,7 +67,8 @@ export default function TodoTaskModal({
     console.log("TodoTaskModal - titleProp:", titleProp);
     console.log("TodoTaskModal - task:", task);
     console.log("TodoTaskModal - properties:", properties);
-  }, [titleProp, task, properties]);
+    console.log("TodoTaskModal - showAddProp:", showAddProp);
+  }, [titleProp, task, properties, showAddProp]);
 
   // Sync localTitle when task changes (but not while user is typing)
   useEffect(() => {
@@ -94,6 +96,11 @@ export default function TodoTaskModal({
   const res = await fetch(`/api/todo/tasks/${taskId}`);
   const data = await res.json();
 
+  // Ensure values object exists
+  if (!data.values) {
+    data.values = {};
+  }
+
   setTask(data);
 
   // Use direct title field from schema
@@ -117,8 +124,8 @@ const updateValues = async (newValues: any) => {
   console.log("updateValues - Updating task:", task._id);
   console.log("updateValues - New values:", newValues);
 
-  // Optimistic UI update
-  setTask({ ...task, values: newValues });
+  // Optimistic UI update - ensure values object exists
+  setTask({ ...task, values: newValues || {} });
 
   try {
     const response = await fetch(`/api/todo/tasks/${task._id}`, {
@@ -136,6 +143,11 @@ const updateValues = async (newValues: any) => {
 
     const updatedTask = await response.json();
     console.log("updateValues - Successfully updated task:", updatedTask);
+    
+    // Ensure values exists in updated task
+    if (!updatedTask.values) {
+      updatedTask.values = {};
+    }
     
     // Update task with server response
     setTask(updatedTask);
@@ -155,7 +167,7 @@ const updateValues = async (newValues: any) => {
     }
 
     const newValues = {
-      ...task.values,
+      ...(task.values || {}),
       [propId]: value,
     };
 
@@ -175,7 +187,7 @@ const updateValues = async (newValues: any) => {
     if (!task) return [];
     return properties.filter((p) => {
       if (p.type === "title") return false;
-      const v = task.values[p._id];
+      const v = task.values?.[p._id];
       return (
         v !== undefined &&
         v !== null &&
@@ -189,7 +201,7 @@ const updateValues = async (newValues: any) => {
     if (!task) return [];
     return properties.filter((p) => {
       if (p.type === "title") return false;
-      const v = task.values[p._id];
+      const v = task.values?.[p._id];
       return (
         v === undefined ||
         v === null ||
@@ -201,7 +213,7 @@ const updateValues = async (newValues: any) => {
 
   const renderPropertyInput = (p: Property) => {
     if (!task) return null;
-    const v = task.values?.[p._id];
+    const v = task.values?.[p._id] ?? (task.values || {})[p._id];
 
     switch (p.type) {
       case "text":
@@ -222,7 +234,8 @@ const updateValues = async (newValues: any) => {
             placeholder="Enter number..."
           />
         );
-
+        
+        
       case "date": {
         const dateValue = v ? new Date(v).toISOString().split("T")[0] : "";
         return (
@@ -233,6 +246,38 @@ const updateValues = async (newValues: any) => {
           />
         );
       }
+      case "email": {
+  const sendEmail = async (email: string) => {
+    try {
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+    } catch (err) {
+      console.error("Email send failed", err);
+    }
+  };
+
+  return (
+    <Input
+      type="email"
+      value={v || ""}
+      placeholder="email@example.com"
+      onChange={(e) => setValue(p._id, e.target.value)}
+      onBlur={(e) => {
+        const email = e.target.value;
+
+        // basic validation
+        if (email && email.includes("@")) {
+          sendEmail(email); // ✅ API call
+        }
+      }}
+    />
+  );
+}
 
       case "checkbox":
         return (
@@ -394,6 +439,7 @@ const updateValues = async (newValues: any) => {
   if (!isOpen) return null;
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={(v) => {
   if (!v) {
     console.log("TodoTaskModal - Modal closing, calling onClose and onUpdated");
@@ -419,7 +465,9 @@ const updateValues = async (newValues: any) => {
   }
 }}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-4" />
+        <DialogHeader className="px-6 pt-6 pb-4">
+          <DialogTitle className="text-xl font-semibold">Task Details</DialogTitle>
+        </DialogHeader>
 
         {loading || !task ? (
           <div className="p-6 text-sm text-gray-500">Loading...</div>
@@ -476,7 +524,10 @@ const updateValues = async (newValues: any) => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowAddProp(true)}
+                    onClick={() => {
+                      console.log("Add Property button clicked");
+                      setShowAddProp(true);
+                    }}
                   >
                     + Add Property
                   </Button>
@@ -486,7 +537,7 @@ const updateValues = async (newValues: any) => {
                   <div className="py-10 text-center text-muted-foreground">
                     <div>No properties available yet.</div>
                     <div className="text-sm mt-1">
-                      Click "+ Add Property" to create fields for your tasks.
+                      Click + Add Property to create fields for your tasks.
                     </div>
                   </div>
                 )}
@@ -548,24 +599,28 @@ const updateValues = async (newValues: any) => {
           </>
         )}
       </DialogContent>
+    </Dialog>
 
-      {/* Add Property Modal */}
-      {showAddProp && (
+    {/* Add Property Modal - Outside main Dialog to prevent z-index issues */}
+    {showAddProp && (
+      <>
+        {console.log("Rendering AddPropertyPicker modal")}
         <AddPropertyPicker
           properties={properties}
           visiblePropIds={[]}
           databaseId={databaseId}
-          onPick={() => {
+          onPick={async () => {
             setShowAddProp(false);
-            onUpdated();
+            await onUpdated();
           }}
-          onPropertyCreated={() => {
+          onPropertyCreated={async () => {
+            await onUpdated();
             setShowAddProp(false);
-            onUpdated();
           }}
           onClose={() => setShowAddProp(false)}
         />
-      )}
-    </Dialog>
+      </>
+    )}
+    </>
   );
 }
