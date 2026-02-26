@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import CoolLoader from '@/components/Loader';
+import { SpinnerFullscreen } from './ui/spinner';
 
 interface LayoutContextType {
       view: string;
@@ -70,7 +71,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                                                       exit={{ opacity: 0 }}
                                                       transition={{ duration: 0.3 }}
                                                 >
-                                                      <CoolLoader isDark={isDark} />
+                                                      <SpinnerFullscreen />
                                                 </motion.div>
                                           ) : (
                                                 <motion.div

@@ -1,6 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 
 type Property = {
   _id: string;
@@ -29,6 +38,7 @@ export default function AddPropertyPicker({
   onPick,
   onPropertyCreated,
   onClose,
+  open,
 }: {
   properties: Property[];
   visiblePropIds: string[];
@@ -36,11 +46,11 @@ export default function AddPropertyPicker({
   onPick: (propId: string) => void;
   onPropertyCreated: () => void;
   onClose: () => void;
+  open: boolean;
 }) {
   const [creating, setCreating] = useState(false);
 
   const createAndAddProperty = async (type: string, label: string) => {
-    console.log("Creating property:", type, label);
     setCreating(true);
 
     const options =
@@ -64,25 +74,16 @@ export default function AddPropertyPicker({
 
       if (!res.ok) {
         const error = await res.json();
-        console.error("Failed to create property:", error);
-        alert(`Failed to create property: ${error.error || 'Unknown error'}`);
+        alert(`Failed: ${error.error || "Unknown error"}`);
         setCreating(false);
         return;
       }
 
-      const newProp = await res.json();
-      console.log("Property created successfully:", newProp);
-
       setCreating(false);
-      
-      // Call onPropertyCreated and wait for parent to refresh
       await onPropertyCreated();
-      
-      // Close modal after parent has refreshed
       onClose();
-    } catch (error) {
-      console.error("Error creating property:", error);
-      alert("Failed to create property. Please try again.");
+    } catch {
+      alert("Failed to create property");
       setCreating(false);
     }
   };
@@ -92,91 +93,72 @@ export default function AddPropertyPicker({
   );
 
   return (
-    <div 
-      className="fixed inset-0 z-60 flex items-center justify-center bg-black/20"
-      onClick={() => {
-        console.log("Backdrop clicked");
-        onClose();
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
       }}
     >
-      <div 
-        className="w-full max-w-md bg-white rounded-xl border shadow-xl overflow-hidden"
-        onClick={(e) => {
-          console.log("Modal content clicked");
-          e.stopPropagation();
-        }}
-      >
-        <div className="px-4 py-3 border-b">
-          <div className="text-sm font-semibold">Add a property</div>
-          <div className="text-xs text-gray-500 mt-1">
+      <DialogContent className="max-w-md p-0">
+        <DialogHeader className="px-4 py-3 border-b">
+          <DialogTitle className="text-sm">
+            Add a property
+          </DialogTitle>
+          <DialogDescription className="text-xs">
             Click a type to create a new property
-          </div>
-        </div>
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="max-h-[400px] overflow-auto">
-          {/* Existing hidden properties */}
+        <ScrollArea className="max-h-[400px]">
+          {/* Existing Properties */}
           {hiddenProps.length > 0 && (
             <>
-              <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50">
+              <div className="px-4 py-2 text-xs font-semibold text-muted-foreground bg-muted">
                 EXISTING PROPERTIES
               </div>
+
               {hiddenProps.map((p) => (
                 <button
                   key={p._id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log("Existing property clicked:", p._id, p.name);
-                    onPick(p._id);
-                  }}
-                  className="w-full px-4 py-2.5 text-left text-sm flex items-center justify-between hover:bg-gray-50 border-b cursor-pointer"
+                  onClick={() => onPick(p._id)}
+                  className="w-full px-4 py-2.5 text-left text-sm flex items-center justify-between hover:bg-muted border-b"
                 >
-                  <div className="font-medium">{p.name}</div>
-                  <div className="text-xs text-gray-500 capitalize">
+                  <span className="font-medium">{p.name}</span>
+                  <span className="text-xs text-muted-foreground capitalize">
                     {p.type.replace("_", " ")}
-                  </div>
+                  </span>
                 </button>
               ))}
             </>
           )}
 
-          {/* Property types to create */}
-          <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50">
+          {/* Create New */}
+          <div className="px-4 py-2 text-xs font-semibold text-muted-foreground bg-muted">
             CREATE NEW PROPERTY
           </div>
+
           {PROPERTY_TYPES.map(({ type, label, icon }) => (
             <button
               key={type}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log("Button clicked:", type, label);
-                createAndAddProperty(type, label);
-              }}
+              onClick={() => createAndAddProperty(type, label)}
               disabled={creating}
-              className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 hover:bg-blue-50 border-b disabled:opacity-50 cursor-pointer"
+              className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 hover:bg-blue-50 border-b disabled:opacity-50"
             >
-              <span className="text-lg w-6 text-center">{icon}</span>
-              <div className="flex-1 font-medium">{label}</div>
-              <div className="text-xs text-gray-400">Click to add</div>
+              <span className="w-6 text-center">{icon}</span>
+              <span className="flex-1 font-medium">{label}</span>
+              <span className="text-xs text-muted-foreground">
+                Click to add
+              </span>
             </button>
           ))}
-        </div>
+        </ScrollArea>
 
         <div className="px-4 py-3 border-t flex justify-end">
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log("Close button clicked");
-              onClose();
-            }}
-            className="text-sm px-4 py-2 rounded-md border hover:bg-gray-50 cursor-pointer"
-          >
+          <Button variant="outline" size="sm" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

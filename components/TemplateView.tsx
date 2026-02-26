@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { Layout, Search, Users, FileText, Plus, Zap, Star, Columns } from 'lucide-react';
+import { SpinnerFullscreen } from '@/components/ui/spinner';
 
 // Mock Data matching the image but with unique colors
 const mockTemplates = [
@@ -93,8 +94,23 @@ import { motion } from 'framer-motion';
 export default function TemplateView() {
       const { resolvedTheme } = useTheme();
       const isDark = resolvedTheme === 'dark';
+      const [isLoading, setIsLoading] = useState(true);
 
       const pageBg = isDark ? 'bg-slate-950' : 'bg-rose-50';
+
+      useEffect(() => {
+            // Simulate loading templates
+            const timer = setTimeout(() => setIsLoading(false), 800);
+            return () => clearTimeout(timer);
+      }, []);
+
+      if (isLoading) {
+            return (
+                  <div className={`flex-1 min-h-screen transition-colors duration-700 ${pageBg}`}>
+                        <SpinnerFullscreen text="Loading templates..." />
+                  </div>
+            );
+      }
 
       return (
             <div className={`flex-1 p-10 min-h-screen transition-colors duration-700 ${pageBg}`}>

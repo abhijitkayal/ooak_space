@@ -13,6 +13,7 @@ import {
       User,
       Clock
 } from 'lucide-react';
+import { SpinnerFullscreen } from './ui/spinner';
 
 // Mock Data
 interface Message {
@@ -61,6 +62,21 @@ export default function InboxView() {
       const { resolvedTheme } = useTheme();
       const isDark = resolvedTheme === 'dark';
       const cardBg = isDark ? 'bg-[#1F2125] border-gray-800' : 'bg-white border-rose-100';
+      const [isLoading, setIsLoading] = useState(true);
+
+      useEffect(() => {
+            // Simulate loading inbox messages
+            const timer = setTimeout(() => setIsLoading(false), 800);
+            return () => clearTimeout(timer);
+      }, []);
+
+      if (isLoading) {
+            return (
+                  <div className={`flex-1 transition-colors ${isDark ? 'bg-slate-950' : 'bg-rose-50'}`}>
+                        <SpinnerFullscreen text="Loading inbox..." />
+                  </div>
+            );
+      }
 
       return (
             <div className={`flex-1 p-4 md:p-6 lg:p-8 transition-colors ${isDark ? 'bg-slate-950' : 'bg-rose-50'} flex flex-col md:flex-row gap-4 md:gap-8`}>

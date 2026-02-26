@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useWorkspaceStore } from "@/app/store/WorkspaceStore";
 import { useRouter } from "next/navigation";
+import ViewPickerCard from "./ViewpickerCard";
 
 export default function ProjectRow({ project, isDark }: any) {
   const router = useRouter();
+  const [showCreateDbModal, setShowCreateDbModal] = useState(false);
 
   const {
     databasesByProject,
@@ -41,7 +43,7 @@ export default function ProjectRow({ project, isDark }: any) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            router.push(`/projects/${project._id}?createDb=1`);
+            setShowCreateDbModal(true);
           }}
           className={`p-1 rounded-md ${
             isDark ? "hover:bg-white/10" : "hover:bg-gray-100"
@@ -69,6 +71,17 @@ export default function ProjectRow({ project, isDark }: any) {
           </div>
         ))}
       </div>
+
+      {/* CREATE DATABASE MODAL */}
+      {showCreateDbModal && (
+        <ViewPickerCard
+          projectId={project._id}
+          onDone={() => {
+            setShowCreateDbModal(false);
+            fetchDatabases(project._id);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -271,6 +271,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SpinnerFullscreen } from "@/components/ui/spinner";
 
 import { Plus } from "lucide-react";
 
@@ -422,7 +423,9 @@ export default function BoardView({ databaseId }: { databaseId: string }) {
     await updateItemValue(item._id, newValues);
   };
 
-  if (loading) return <div className="p-6 text-sm">Loading board...</div>;
+  if (loading) {
+    return <SpinnerFullscreen text="Loading board..." />;
+  }
 
   return (
     <Card className="overflow-hidden">

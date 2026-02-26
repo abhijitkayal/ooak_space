@@ -606,6 +606,7 @@ const updateValues = async (newValues: any) => {
       <>
         {console.log("Rendering AddPropertyPicker modal")}
         <AddPropertyPicker
+          open={showAddProp}
           properties={properties}
           visiblePropIds={[]}
           databaseId={databaseId}

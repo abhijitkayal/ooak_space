@@ -1776,7 +1776,7 @@ export default function Sidebar({ view, setView }: SidebarProps) {
       </div>
 
       {/* COLLAPSE BUTTON */}
-      <motion.button layout onClick={() => setOpen((v) => !v)}
+      <button layout onClick={() => setOpen((v) => !v)}
         className={`hidden lg:flex fixed bottom-0 left-0 border-t z-50 ${isDark ? "border-gray-800 bg-[#0F1014] hover:bg-[#1a1b1e]" : "border-rose-200 bg-rose-50 hover:bg-rose-100"}`}
         style={{ width: open ? "300px" : "80px" }}>
         <div className={`flex items-center ${open ? "justify-start px-4" : "justify-center"} p-2`}>
@@ -1785,7 +1785,7 @@ export default function Sidebar({ view, setView }: SidebarProps) {
           </motion.div>
           {open && <motion.span layout className="text-xs font-medium">Hide</motion.span>}
         </div>
-      </motion.button>
+      </button>
     </>
   );
 

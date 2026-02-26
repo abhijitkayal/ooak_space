@@ -227,6 +227,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
 import { Plus } from "lucide-react";
+import { SpinnerFullscreen } from "../ui/spinner";
 
 type Property = {
   _id: string;
@@ -311,7 +312,9 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
     return String(value);
   };
 
-  if (loading) return <div className="p-6 text-sm">Loading gallery...</div>;
+  if (loading) {
+    return <SpinnerFullscreen text="Loading gallery..." />;
+  }
 
   return (
     <Card className="overflow-hidden">

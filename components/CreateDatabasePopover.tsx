@@ -1,6 +1,5 @@
-// "use client";
+"use client";
 
-import * as Popover from "@radix-ui/react-popover";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
@@ -20,25 +19,22 @@ export default function CreateDatabasePopover({
   const [open, setOpen] = useState(!!defaultOpen);
 
   return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger asChild>
-        <Button variant="outline" className={`gap-2 ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}>
-          <Plus size={16} />
-          <span className="text-sm font-semibold">New Database</span>
-        </Button>
-      </Popover.Trigger>
+    <>
+      <Button 
+        variant="outline" 
+        className={`gap-2 ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
+        onClick={() => setOpen(true)}
+      >
+        <Plus size={16} />
+        <span className="text-sm font-semibold">New</span>
+      </Button>
 
-      <Popover.Portal>
-        <Popover.Content
-          sideOffset={10}
-          className={`border shadow-xl rounded-2xl p-3 w-full ${isDark ? "bg-[#1e1f23] border-gray-700" : "bg-white border-gray-200"}`}
-        >
-          <ViewPickerCard
-            projectId={projectId}
-            onDone={() => setOpen(false)}
-          />
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+      {open && (
+        <ViewPickerCard
+          projectId={projectId}
+          onDone={() => setOpen(false)}
+        />
+      )}
+    </>
   );
 }

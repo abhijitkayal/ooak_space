@@ -1,7 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Store, ShoppingBag } from 'lucide-react';
+import { SpinnerFullscreen } from '@/components/ui/spinner';
+import { useTheme } from 'next-themes';
 
 export default function MarketPlacesView() {
+      const { resolvedTheme } = useTheme();
+      const isDark = resolvedTheme === 'dark';
+      const [isLoading, setIsLoading] = useState(true);
+
+      useEffect(() => {
+            // Simulate loading marketplace items
+            const timer = setTimeout(() => setIsLoading(false), 800);
+            return () => clearTimeout(timer);
+      }, []);
+
+      if (isLoading) {
+            return (
+                  <div className="p-6">
+                        <SpinnerFullscreen text="Loading marketplace..." />
+                  </div>
+            );
+      }
       return (
             <div className="p-6">
                   <div className="flex items-center gap-3 mb-6">

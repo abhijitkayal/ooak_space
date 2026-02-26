@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { SpinnerFullscreen } from "@/components/ui/spinner";
 
 interface CalendarItem {
   _id: string;
@@ -15,14 +16,31 @@ export default function CalendarPage() {
   const databaseId = search.get("databaseId");
 
   const [items, setItems] = useState<CalendarItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!databaseId) return;
+    if (!databaseId) {
+      setIsLoading(false);
+      return;
+    }
 
+    setIsLoading(true);
     fetch(`/api/database-items?databaseId=${databaseId}`)
       .then((r) => r.json())
-      .then(setItems);
+      .then((data) => {
+        setItems(data);
+        setIsLoading(false);
+      })
+      .catch(() => setIsLoading(false));
   }, [databaseId]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white p-10">
+        <SpinnerFullscreen text="Loading calendar..." />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white p-10">

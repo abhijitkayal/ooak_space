@@ -7,20 +7,18 @@ import ProjectHeader from "@/components/ProjectHeader";
 import DatabaseTabs from "@/components/DatabaseTabs";
 import CreateDatabasePopover from "@/components/CreateDatabasePopover";
 import { useTheme } from "next-themes";
+import { SpinnerFullscreen } from "@/components/ui/spinner";
 
 export default function ProjectPage() {
-  const {setTheme,  resolvedTheme} = useTheme();
+  const { resolvedTheme} = useTheme();
   const params = useParams();
   const search = useSearchParams();
-
-  const setGlobalTheme = (dark:boolean) => {
-    setTheme(dark ? "dark" : "light");
-  }
+  const [isLoading, setIsLoading] = useState(true);
 
   const projectId = params.projectId as string;
   const createDb = search.get("createDb") === "1";
 
-  const { projects, fetchProjects, databasesByProject, fetchDatabases } =
+  const { projects, fetchProjects, fetchDatabases } =
     useWorkspaceStore();
 
     const isDark = resolvedTheme === "dark";
@@ -31,19 +29,32 @@ export default function ProjectPage() {
   );
 
   useEffect(() => {
-    fetchProjects();
-    fetchDatabases(projectId);
-  }, [projectId]);
+    const loadData = async () => {
+      setIsLoading(true);
+      await fetchProjects();
+      await fetchDatabases(projectId);
+      setIsLoading(false);
+    };
+    loadData();
+  }, [projectId, fetchProjects, fetchDatabases]);
 
-  if (!project) return <div className="p-10">Loading...</div>;
+  if (isLoading || !project) {
+    return (
+      <div className={`min-h-screen ${isDark ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"}`}>
+        <SpinnerFullscreen text="Loading project..." />
+      </div>
+    );
+  }
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
-      <div className="w-full px-4 py-10">
+    <div className={`min-h-screen ${isDark ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"}`}>
+      <div className="w-full max-w-7xl mx-auto px-6 py-10">
         <ProjectHeader project={project} />
 
-        <div className="mt-6 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-500">Databases</h2>
+        <div className="mt-8 flex items-center justify-between">
+          <h2 className={`text-sm font-semibold ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            Databases
+          </h2>
           <CreateDatabasePopover projectId={projectId} defaultOpen={createDb} />
         </div>
 

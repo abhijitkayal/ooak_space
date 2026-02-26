@@ -21,6 +21,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+
 // --- Type Definitions ---
 interface Tag {
     label: string;
@@ -97,12 +98,15 @@ const findColumn = (columns: Column[], id: UniqueIdentifier) => {
     return taskColumn;
 };
 
+
+
 const arrayMove = (array: any[], fromIndex: number, toIndex: number) => {
     const newArray = [...array];
     const [element] = newArray.splice(fromIndex, 1);
     newArray.splice(toIndex, 0, element);
     return newArray;
 };
+
 
 // --- KanbanTask Component (Draggable Item) ---
 function KanbanTask({ task, isDark, getTagColor }: { task: Task, isDark: boolean, getTagColor: (color: string) => string }) {

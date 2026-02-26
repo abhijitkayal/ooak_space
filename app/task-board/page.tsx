@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import AppShell from '@/components/AppShell';
 import {
@@ -14,6 +14,7 @@ import {
     Zap, // For High Priority
     ChevronDown
 } from 'lucide-react';
+import { SpinnerFullscreen } from '@/components/ui/spinner';
 
 // --- Mock Data ---
 const mockTasks = [
@@ -109,6 +110,21 @@ const TaskColumn: React.FC<any> = ({ title, status, tasks, isDark }) => {
 export function TaskBoardView() {
     const { resolvedTheme } = useTheme();
     const isDark = resolvedTheme === 'dark';
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        // Simulate loading tasks
+        const timer = setTimeout(() => setIsLoading(false), 800);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (isLoading) {
+        return (
+            <div className={`flex-1 transition-colors ${isDark ? 'bg-slate-950' : 'bg-rose-50'}`}>
+                <SpinnerFullscreen text="Loading task board..." />
+            </div>
+        );
+    }
 
     // Group tasks by status
     const tasksByStatus: { [key: string]: typeof mockTasks } = {

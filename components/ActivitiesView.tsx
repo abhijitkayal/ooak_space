@@ -10,6 +10,7 @@ import {
       Tag,
       Clock
 } from 'lucide-react';
+import { SpinnerFullscreen } from "@/components/ui/spinner";
 
 // Mock Data
 const mockActivities = [
@@ -81,6 +82,21 @@ export default function ActivitiesView() {
       const { resolvedTheme } = useTheme();
       const isDark = resolvedTheme === 'dark';
       const cardBg = isDark ? 'bg-[#1F2125] border-gray-800' : 'bg-white border-rose-100';
+      const [isLoading, setIsLoading] = useState(true);
+
+      useEffect(() => {
+            // Simulate loading activities
+            const timer = setTimeout(() => setIsLoading(false), 800);
+            return () => clearTimeout(timer);
+      }, []);
+
+      if (isLoading) {
+            return (
+                  <div className={`flex-1 transition-colors ${isDark ? 'bg-slate-950' : 'bg-rose-50'}`}>
+                        <SpinnerFullscreen text="Loading activities..." />
+                  </div>
+            );
+      }
 
       return (
             <div className={`flex-1 p-8 transition-colors ${isDark ? 'bg-slate-950' : 'bg-rose-50'} flex gap-8`}>
