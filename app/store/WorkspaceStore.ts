@@ -65,7 +65,7 @@
 
 import { create } from "zustand";
 
-export type ViewType = "timeline" | "table" | "board" | "gallery" | "todo" | "text" | "heading" | "bullatedlist" | "numberlist";
+export type ViewType = "timeline" | "table" | "board" | "gallery" | "todo" | "text" | "heading" | "bullatedlist" | "numberlist" | "pagelink";
 
 export type Project = {
   _id: string;

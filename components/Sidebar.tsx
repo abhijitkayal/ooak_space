@@ -1678,7 +1678,7 @@ export default function Sidebar({ view, setView }: SidebarProps) {
         {/* NAV */}
         <div className={`${open ? "px-6 py-2" : "px-2 py-2"}`}>
           <div className="space-y-2 relative">
-            {open && <div className={`absolute left-[18px] top-0 bottom-0 w-[2px] ${isDark ? "bg-gray-700" : "bg-gray-300"}`} />}
+            {open && <div className={`absolute left-[8px] top-0 bottom-0 w-[2px] ${isDark ? "bg-gray-700" : "bg-gray-300"}`} />}
 
             {menuItems.map((item) => {
               const isActive = pathname === item.path;
@@ -1686,15 +1686,15 @@ export default function Sidebar({ view, setView }: SidebarProps) {
 
               return (
                 <div key={item.key} className="rounded-xl overflow-visible relative">
-                  {open && <div className={`absolute left-[18px] top-[12px] w-[24px] h-[16px] border-l-2 border-b-2 rounded-bl-lg ${isDark ? "border-gray-700" : "border-gray-300"}`} />}
+                  {open && <div className={`absolute left-[10px] top-0 w-[28px] h-[25px] border-l-2 border-b-2 rounded-bl-lg ${isDark ? "border-gray-700" : "border-gray-300"}`} />}
 
                   <div className="relative cursor-pointer group" onClick={() => navigateTo(item.path)}>
-                    <div className={`absolute inset-0 bg-gradient-to-r from-teal-600 to-rose-600 rounded-xl ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-40"}`} />
+                    <div className={`absolute inset-0  w-60 ml-3 bg-gradient-to-r from-teal-600 to-rose-600 rounded-xl ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-40"}`} />
                     <div className={`relative flex items-center ${open ? "gap-3 px-4" : "justify-center px-2"} py-2 ${isActive ? "text-white" : isDark ? "text-gray-400" : "text-gray-700"}`}>
                       {itemPages.length > 0 ? (
-                        <span className="text-xl flex-shrink-0">{itemPages[0].emoji || "📄"}</span>
+                        <span className="text-xl flex-shrink-0 ml-3">{itemPages[0].emoji || "📄"}</span>
                       ) : (
-                        <motion.div layout className={`grid h-full ${open ? "w-10" : "w-full"} place-content-center text-lg`}>{item.icon}</motion.div>
+                        <motion.div layout className={`grid h-full ${open ? "w-10" : "w-full"} place-content-center text-lg ml-3`}>{item.icon}</motion.div>
                       )}
                       {open && (
                         <div className="flex items-center justify-between w-full">
@@ -1715,21 +1715,21 @@ export default function Sidebar({ view, setView }: SidebarProps) {
                   {open && (
                     item.key === "project-board" ? (
                       <div className="pl-6 pb-2 space-y-2 relative">
-                        {projects.length > 0 && <div className={`absolute left-[18px] top-2 bottom-0 w-[2px] ${isDark ? "bg-gray-600" : "bg-gray-400"}`} />}
+                        {projects.length > 0 && <div className={`absolute left-[30px] top-2 bottom-0 w-[2px] ${isDark ? "bg-gray-600" : "bg-gray-400"}`} />}
                         {projects.length === 0 ? (
-                          <p className={`text-xs px-3 py-2 rounded-xl ml-[20px] ${isDark ? "text-gray-500 bg-white/5" : "text-gray-600 bg-white"}`}>No projects yet. Create one.</p>
+                          <p className={`text-xs px-3 py-2 rounded-xl ml-[32px] ${isDark ? "text-gray-500 bg-white/5" : "text-gray-600 bg-white"}`}>No projects yet. Create one.</p>
                         ) : (
-                          projects.map((project) => (
+                          projects.map((project, idx) => (
                             <div key={project._id} className="relative">
-                              <div className={`absolute left-[18px] top-[6px] w-[22px] h-[18px] border-l-2 border-b-2 rounded-bl-lg ${isDark ? "border-gray-600" : "border-gray-400"}`} />
-                              <div className="ml-[20px]"><ProjectRow project={project} isDark={isDark} /></div>
+                              <div className={`absolute left-[8px] top-2 w-[28px] h-[14px] border-l-2 border-b-2 rounded-bl-lg ${isDark ? "border-gray-600" : "border-gray-400"}`} />
+                              <div className="ml-[32px]"><ProjectRow project={project} isDark={isDark} /></div>
                             </div>
                           ))
                         )}
                       </div>
                     ) : (
                       <div className="pl-6 pb-2 space-y-1 relative">
-                        {itemPages.length > 0 && <div className={`absolute left-[18px] top-2 bottom-0 w-[2px] ${isDark ? "bg-gray-600" : "bg-gray-400"}`} />}
+                        {itemPages.length > 0 && <div className={`absolute left-[8px] top-2 bottom-0 w-[2px] ${isDark ? "bg-gray-600" : "bg-gray-400"}`} />}
                         {itemPages.slice(0, 5).map((p, i) => {
                           const bgColors = [
                             isDark ? "bg-purple-500/10" : "bg-purple-100",
@@ -1738,10 +1738,11 @@ export default function Sidebar({ view, setView }: SidebarProps) {
                             isDark ? "bg-orange-500/10" : "bg-orange-100",
                             isDark ? "bg-pink-500/10"   : "bg-pink-100",
                           ];
+                          const isTaskBoard = item.key === "task-board";
                           return (
                             <div key={p._id} className="relative">
-                              <div className={`absolute left-[18px] top-[6px] w-[22px] h-[16px] border-l-2 border-b-2 rounded-bl-lg ${isDark ? "border-gray-600" : "border-gray-400"}`} />
-                              <div className={`group text-xs px-3 py-2 rounded-lg cursor-pointer transition-all ml-[20px] ${bgColors[i % 5]} ${isDark ? "text-gray-300 hover:brightness-125" : "text-gray-800 hover:brightness-95"}`}
+                              <div className={`absolute left-[8px] top-0 w-[28px] h-[14px] border-l-2 border-b-2 rounded-bl-lg ${isDark ? "border-gray-600" : "border-gray-400"}`} />
+                              <div className={`group text-xs px-3 py-2 rounded-lg cursor-pointer transition-all ${isTaskBoard ? 'ml-[32px]' : 'ml-[32px]'} ${bgColors[i % 5]} ${isDark ? "text-gray-300 hover:brightness-125" : "text-gray-800 hover:brightness-95"}`}
                                 onClick={(e) => { e.stopPropagation(); alert(`Open page: ${p.pageName}`); }}>
                                 <div className="flex items-center gap-2 justify-between">
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -1776,7 +1777,7 @@ export default function Sidebar({ view, setView }: SidebarProps) {
       </div>
 
       {/* COLLAPSE BUTTON */}
-      <button layout onClick={() => setOpen((v) => !v)}
+      <motion.button layout onClick={() => setOpen((v) => !v)}
         className={`hidden lg:flex fixed bottom-0 left-0 border-t z-50 ${isDark ? "border-gray-800 bg-[#0F1014] hover:bg-[#1a1b1e]" : "border-rose-200 bg-rose-50 hover:bg-rose-100"}`}
         style={{ width: open ? "300px" : "80px" }}>
         <div className={`flex items-center ${open ? "justify-start px-4" : "justify-center"} p-2`}>
@@ -1785,7 +1786,7 @@ export default function Sidebar({ view, setView }: SidebarProps) {
           </motion.div>
           {open && <motion.span layout className="text-xs font-medium">Hide</motion.span>}
         </div>
-      </button>
+      </motion.button>
     </>
   );
 

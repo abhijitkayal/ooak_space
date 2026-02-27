@@ -1856,6 +1856,8 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
   const [draggingCard, setDraggingCard] = useState<TimelineItem | null>(null);
   const [draggedCardDuration, setDraggedCardDuration] = useState(0);
   const [cardDragOffset, setCardDragOffset] = useState({ x: 0, y: 0 });
+  const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
+  const [hasMoved, setHasMoved] = useState(false);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -1916,6 +1918,9 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
     e.preventDefault();
     e.stopPropagation();
 
+    setMouseDownPos({ x: e.clientX, y: e.clientY });
+    setHasMoved(false);
+
     const s = new Date(item.startDate);
     const endDate = new Date(item.endDate);
     const duration = Math.max(1, daysBetween(s, endDate) + 1);
@@ -1936,6 +1941,13 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
     if (!isDraggingNew && !draggingCard) return;
 
     const handleMouseMove = (e: MouseEvent) => {
+      const dx = Math.abs(e.clientX - mouseDownPos.x);
+      const dy = Math.abs(e.clientY - mouseDownPos.y);
+      
+      if (dx > 5 || dy > 5) {
+        setHasMoved(true);
+      }
+
       setDragPosition({ x: e.clientX, y: e.clientY });
 
       if (gridRef.current) {
@@ -1954,7 +1966,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
     };
 
     const handleMouseUp = async (e: MouseEvent) => {
-      if (gridRef.current) {
+      if (gridRef.current && hasMoved) {
         const rect = gridRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
 
@@ -2003,6 +2015,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
 
       setIsDraggingNew(false);
       setDraggingCard(null);
+      setHasMoved(false);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -2012,7 +2025,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDraggingNew, draggingCard, draggedCardDuration, databaseId, rangeStart, GRID_WIDTH, DAY_COL_WIDTH, ROW_HEIGHT]);
+  }, [isDraggingNew, draggingCard, draggedCardDuration, databaseId, rangeStart, GRID_WIDTH, DAY_COL_WIDTH, ROW_HEIGHT, hasMoved, mouseDownPos]);
 
   const createByClick = async (e: React.MouseEvent) => {
     if (!gridRef.current) return;
@@ -2267,12 +2280,12 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                           onMouseDown={(e) => handleCardMouseDown(e, it)}
                           onClick={(ev) => {
                             ev.stopPropagation();
-                            if (!draggingCard) {
+                            if (!hasMoved) {
                               setSelectedItem(it);
                               setModalOpen(true);
                             }
                           }}
-                          className={`absolute top-[10px] h-[44px] rounded-xl border shadow-sm flex items-center px-4 font-semibold cursor-grab active:cursor-grabbing transition-opacity ${
+                          className={`absolute top-[10px] h-[44px] rounded-xl border shadow-sm flex items-center px-4 font-semibold cursor-pointer transition-opacity ${
                             isBeingDragged ? "opacity-30" : "opacity-100"
                           } ${isDark ? "bg-[#1e1f23] border-gray-700 text-gray-200 hover:bg-[#252730]" : "bg-white border-gray-200 text-gray-800 hover:bg-gray-50"}`}
                           style={{ left: leftPx, width: widthPx }}

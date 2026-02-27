@@ -12,12 +12,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronLeft, ChevronRight, ChevronDown, Plus } from "lucide-react";
+import TimelineItemModal from "@/components/TimelineItemmodal";
+import { useTheme } from "next-themes";
 
 type TimelineItem = {
   _id: string;
   title: string;
   startDate: string;
   endDate: string;
+  assignedTo?: string;
+  status?: string;
+  comment?: string;
 };
 
 function startOfMonth(d: Date) {
@@ -45,26 +50,44 @@ function formatMonthYear(d: Date) {
 export default function TimelineView({ databaseId }: { databaseId: string }) {
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   // 🔥 fixed route name: database-items
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(
-          `/api/database_items?databaseId=${databaseId}`
-        );
-        const data = await res.json();
-        setItems(data);
-      } catch (e) {
-        console.log("Timeline fetch error:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchItems = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(
+        `/api/database_items?databaseId=${databaseId}`
+      );
+      const data = await res.json();
+      setItems(data);
+    } catch (e) {
+      console.log("Timeline fetch error:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchItems();
   }, [databaseId]);
+
+  const handleItemClick = (item: TimelineItem) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
+
+  const handleSaved = () => {
+    fetchItems();
+  };
 
   // ---- Determine timeline month (like Notion screenshot)
   const monthDate = useMemo(() => {
@@ -281,6 +304,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                           left: leftPx,
                           width: widthPx,
                         }}
+                        onClick={() => handleItemClick(it)}
                       >
                         <span>{it.title}</span>
 
@@ -299,6 +323,17 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
+
+      {/* Timeline Item Modal */}
+      {selectedItem && (
+        <TimelineItemModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          item={selectedItem}
+          isDark={isDark}
+          onSaved={handleSaved}
+        />
+      )}
     </Card>
   );
 }

@@ -8,7 +8,7 @@ import TableCell from "@/components/TableCell";
 import TableColumnHeader from "../../components/TablecolumnHeader";
 import FormulaModal from "@/components/formula/FormulaModal";
 
-export default function TableView({ databaseId }: { databaseId: string }) {
+export default function TableView({ databaseId, isViewOnly = false }: { databaseId: string; isViewOnly?: boolean }) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
@@ -29,21 +29,23 @@ export default function TableView({ databaseId }: { databaseId: string }) {
           Table
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => addColumn(databaseId)}
-            className={`px-3 py-1.5 rounded-lg border text-sm ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
-          >
-            + Column
-          </button>
+        {!isViewOnly && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => addColumn(databaseId)}
+              className={`px-3 py-1.5 rounded-lg border text-sm ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
+            >
+              + Column
+            </button>
 
-          <button
-            onClick={() => addRow(databaseId)}
-            className={`px-3 py-1.5 rounded-lg border text-sm ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
-          >
-            + Row
-          </button>
-        </div>
+            <button
+              onClick={() => addRow(databaseId)}
+              className={`px-3 py-1.5 rounded-lg border text-sm ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
+            >
+              + Row
+            </button>
+          </div>
+        )}
       </div>
 
       {/* grid */}
@@ -61,6 +63,7 @@ export default function TableView({ databaseId }: { databaseId: string }) {
                 col={col}
                 databaseId={databaseId}
                 refreshColumns={() => fetchColumns(databaseId)}
+                isViewOnly={isViewOnly}
               />
             ))}
           </div>
@@ -74,7 +77,7 @@ export default function TableView({ databaseId }: { databaseId: string }) {
 
               {columns.map((col) => (
                 <div key={col._id} className={`flex-1 min-w-[220px] border-r ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-                  <TableCell row={row} col={col} />
+                  <TableCell row={row} col={col} isViewOnly={isViewOnly} />
                 </div>
               ))}
             </div>
@@ -83,12 +86,14 @@ export default function TableView({ databaseId }: { databaseId: string }) {
       </div>
 
       {/* footer add row */}
-      <button
-        onClick={() => addRow(databaseId)}
-        className={`w-full text-left px-4 py-3 text-sm ${isDark ? "text-gray-500 hover:bg-gray-800" : "text-gray-500 hover:bg-gray-50"}`}
-      >
-        + New
-      </button>
+      {!isViewOnly && (
+        <button
+          onClick={() => addRow(databaseId)}
+          className={`w-full text-left px-4 py-3 text-sm ${isDark ? "text-gray-500 hover:bg-gray-800" : "text-gray-500 hover:bg-gray-50"}`}
+        >
+          + New
+        </button>
+      )}
 
       {/* Formula Modal */}
       <FormulaModal columns={columns} />

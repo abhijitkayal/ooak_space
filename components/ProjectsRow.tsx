@@ -54,20 +54,33 @@ export default function ProjectRow({ project, isDark }: any) {
       </div>
 
       {/* DATABASES */}
-      <div className="pl-8 space-y-1">
-        {dbs.map((db: any) => (
+      <div className="pl-8 space-y-1 relative">
+        {dbs.length > 0 && (
           <div
-            key={db._id}
-            onClick={() => {
-              setActiveDatabase(db._id);
-              router.push(`/projects/${project._id}?db=${db._id}`);
-            }}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs cursor-pointer ${
-              isDark ? "hover:bg-white/5" : "hover:bg-gray-100"
+            className={`absolute left-[8px] top-0 bottom-0 w-[2px] ${
+              isDark ? "bg-gray-600" : "bg-gray-400"
             }`}
-          >
-            <span className="text-base">{db.icon}</span>
-            <span className="truncate">{db.name}</span>
+          />
+        )}
+        {dbs.map((db: any, idx: number) => (
+          <div key={db._id} className="relative">
+            <div
+              className={`absolute -ml-6 top-2 w-[24px] h-[12px] border-l-2 border-b-2 rounded-bl-lg ${
+                isDark ? "border-gray-600" : "border-gray-400"
+              }`}
+            />
+            <div
+              onClick={() => {
+                setActiveDatabase(db._id);
+                router.push(`/projects/${project._id}?db=${db._id}`);
+              }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs cursor-pointer ml-[28px] ${
+                isDark ? "hover:bg-white/5" : "hover:bg-gray-100"
+              }`}
+            >
+              <span className="text-base -ml-8">{db.icon}</span>
+              <span className="truncate">{db.name}</span>
+            </div>
           </div>
         ))}
       </div>

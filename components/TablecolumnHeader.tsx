@@ -8,10 +8,12 @@ export default function TableColumnHeader({
   col,
   databaseId,
   refreshColumns,
+  isViewOnly = false,
 }: {
   col: Column;
   databaseId: string;
   refreshColumns: () => void;
+  isViewOnly?: boolean;
 }) {
   const [name, setName] = useState(col.name);
 
@@ -60,18 +62,19 @@ if (!res.ok) {
         {/* ✅ Editable column name */}
         <input
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => !isViewOnly && setName(e.target.value)}
           onBlur={saveName}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               (e.target as HTMLInputElement).blur();
             }
           }}
-          className="font-semibold text-sm w-full bg-transparent outline-none"
+          disabled={isViewOnly}
+          className={`font-semibold text-sm w-full bg-transparent outline-none ${isViewOnly ? "cursor-default" : ""}`}
         />
 
         {/* ✅ Select column type */}
-        <ColumnTypePicker value={col.type} onChange={changeType} />
+        {!isViewOnly && <ColumnTypePicker value={col.type} onChange={changeType} />}
       </div>
     </div>
   );

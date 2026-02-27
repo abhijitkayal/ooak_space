@@ -946,6 +946,7 @@ const OPTIONS: {
   { type: "heading", title: "Heading", desc: "Heading content", icon: "📌" },
   { type: "bullatedlist", title: "Bulleted List", desc: "Bulleted list content", icon: "•" },
   { type: "numberlist", title: "Numbered List", desc: "Numbered list content", icon: "1." },
+  { type: "pagelink", title: "Page Link", desc: "Link to another page", icon: "🔗" },
 ];
 
 // Template data for each view type
@@ -991,6 +992,10 @@ const TEMPLATES = {
   numberlist: [
     { id: 1, name: "Blank List", desc: "Start from scratch" },
     { id: 2, name: "Step by Step", desc: "Create ordered instructions" },
+  ],
+  pagelink: [
+    { id: 1, name: "Page Link", desc: "Link to another page" },
+    // { id: 2, name: "Step by Step", desc: "Create ordered instructions" },
   ],
 };
 
@@ -1073,25 +1078,70 @@ export default function ViewPickerCard({
               </div>
             </div>
 
-            <div className="space-y-1">
-              {OPTIONS.map((option) => (
-                <button
-                  key={option.type}
-                  onClick={() => setSelectedCategory(option.type)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition ${
-                    selectedCategory === option.type
-                      ? "bg-white shadow-sm font-medium"
-                      : "hover:bg-gray-100"
-                  }`}
-                >
-                  <span className="text-xl">{option.icon}</span>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{option.title}</div>
-                    <div className="text-xs text-gray-500">{option.desc}</div>
-                  </div>
-                </button>
-              ))}
+            {/* Left Sidebar */}
+<div className="w-64 border-r bg-gray-50 overflow-y-auto">
+  <div className="p-4 space-y-6">
+
+    {/* ===== DATASET ===== */}
+    <div>
+      <div className="text-xs font-semibold text-gray-500 uppercase mb-2 px-2">
+        Dataset(suggested)
+      </div>
+
+      <div className="space-y-1">
+        {OPTIONS.filter((o) =>
+          ["table", "board", "timeline", "gallery"].includes(o.type)
+        ).map((option) => (
+          <button
+            key={option.type}
+            onClick={() => setSelectedCategory(option.type)}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition ${
+              selectedCategory === option.type
+                ? "bg-white shadow-sm font-medium"
+                : "hover:bg-gray-100"
+            }`}
+          >
+            <span className="text-xl">{option.icon}</span>
+            <div className="flex-1">
+              <div className="text-sm font-medium">{option.title}</div>
+              <div className="text-xs text-gray-500">{option.desc}</div>
             </div>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {/* ===== BASIC NOTES ===== */}
+    <div>
+      <div className="text-xs font-semibold text-gray-500 uppercase mb-2 px-2">
+        Basic Notes
+      </div>
+
+      <div className="space-y-1">
+        {OPTIONS.filter((o) =>
+          ["todo", "text", "heading", "bullatedlist", "numberlist","pagelink"].includes(o.type)
+        ).map((option) => (
+          <button
+            key={option.type}
+            onClick={() => setSelectedCategory(option.type)}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition ${
+              selectedCategory === option.type
+                ? "bg-white shadow-sm font-medium"
+                : "hover:bg-gray-100"
+            }`}
+          >
+            <span className="text-xl">{option.icon}</span>
+            <div className="flex-1">
+              <div className="text-sm font-medium">{option.title}</div>
+              <div className="text-xs text-gray-500">{option.desc}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+
+  </div>
+</div>
           </div>
         </div>
 

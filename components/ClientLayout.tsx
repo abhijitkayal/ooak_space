@@ -53,6 +53,18 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
       const isDark = resolvedTheme === 'dark';
 
+      // Shared pages and auth pages should not have sidebar/header
+      const isSharedPage = pathname?.startsWith('/shared');
+      const isAuthPage = pathname?.startsWith('/login') || pathname?.startsWith('/signup');
+
+      if (isSharedPage || isAuthPage) {
+            return (
+                  <LayoutContext.Provider value={{ view, setView }}>
+                        {children}
+                  </LayoutContext.Provider>
+            );
+      }
+
       return (
             <LayoutContext.Provider value={{ view, setView }}>
                   <div className="flex h-screen bg-background text-foreground overflow-hidden">

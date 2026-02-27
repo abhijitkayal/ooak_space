@@ -105,7 +105,11 @@ export default function TimelineItemModal({
               onChange={(e) =>
                 setForm((p) => ({ ...p, startDate: e.target.value }))
               }
-              className="w-full p-3 rounded-xl border"
+              onClick={(e) => {
+                const target = e.target as HTMLInputElement;
+                target.showPicker?.();
+              }}
+              className="w-full p-3 rounded-xl border cursor-pointer"
             />
           </div>
 
@@ -117,7 +121,11 @@ export default function TimelineItemModal({
               onChange={(e) =>
                 setForm((p) => ({ ...p, endDate: e.target.value }))
               }
-              className="w-full p-3 rounded-xl border"
+              onClick={(e) => {
+                const target = e.target as HTMLInputElement;
+                target.showPicker?.();
+              }}
+              className="w-full p-3 rounded-xl border cursor-pointer"
             />
           </div>
         </div>

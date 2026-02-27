@@ -25,7 +25,7 @@ const DatabaseSchema = new Schema(
     icon: { type: String, default: "📄" },
     viewType: {
       type: String,
-      enum: ["timeline", "table", "board", "gallery", "todo", "text", "heading", "bullatedlist", "numberlist"],
+      enum: ["timeline", "table", "board", "gallery", "todo", "text", "heading", "bullatedlist", "numberlist","pagelink"],
       default: "table",
     },
   },

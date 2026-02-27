@@ -47,7 +47,7 @@ import { useTheme } from "next-themes";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-export default function DatabaseTabs({ projectId }: { projectId: string }) {
+export default function DatabaseTabs({ projectId, isViewOnly = false }: { projectId: string; isViewOnly?: boolean }) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
@@ -59,7 +59,9 @@ export default function DatabaseTabs({ projectId }: { projectId: string }) {
       <Card className={isDark ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-white"}>
         <CardContent className="p-10 text-center">
           <p className={isDark ? "text-gray-400" : "text-gray-500"}>
-            No databases yet. Click New Database to get started.
+            {isViewOnly 
+              ? "This project has no databases yet."
+              : "No databases yet. Click New Database to get started."}
           </p>
         </CardContent>
       </Card>
@@ -80,7 +82,7 @@ export default function DatabaseTabs({ projectId }: { projectId: string }) {
               </div>
             </CardHeader>
             <CardContent className="pt-2">
-              <DatabaseViewRenderer db={db} />
+              <DatabaseViewRenderer db={db} isViewOnly={isViewOnly} />
             </CardContent>
           </Card>
           {index < dbs.length - 1 && (
