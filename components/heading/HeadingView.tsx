@@ -183,10 +183,10 @@
 // }
 
 
-
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -217,6 +217,9 @@ type HeadingBlock = {
 };
 
 export default function HeadingView({ databaseId }: { databaseId: string }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const [headings, setHeadings] = useState<HeadingBlock[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -297,7 +300,13 @@ export default function HeadingView({ databaseId }: { databaseId: string }) {
     return "text-xl font-semibold";
   };
 
-  if (loading) return <div className="p-6 text-sm">Loading...</div>;
+  if (loading) {
+    return (
+      <div className={`p-6 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider>
@@ -335,10 +344,10 @@ export default function HeadingView({ databaseId }: { databaseId: string }) {
                       updateHeading(h._id, { level });
                     }}
                   >
-                    <SelectTrigger className="w-[80px]">
+                    <SelectTrigger className={`w-[80px] ${isDark ? "bg-[#18191d]" : ""}`}>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-white">
+                    <SelectContent className={isDark ? "bg-[#1e1f23] border-gray-700" : "bg-white"}>
                       <SelectItem value="h1">H1</SelectItem>
                       <SelectItem value="h2">H2</SelectItem>
                       <SelectItem value="h3">H3</SelectItem>

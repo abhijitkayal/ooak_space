@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 import AddPropertyPicker from "./TodoAddpropertyPicker";
 
 import {
@@ -49,6 +50,9 @@ export default function TodoTaskModal({
   properties: Property[];
   onUpdated: () => void;
 }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [localTitle, setLocalTitle] = useState("");
@@ -73,7 +77,6 @@ export default function TodoTaskModal({
   // Sync localTitle when task changes (but not while user is typing)
   useEffect(() => {
     if (task && !isEditingTitle.current) {
-      // Use direct title field from schema
       const titleValue = task.title || "";
       console.log("Syncing localTitle from task.title:", titleValue);
       setLocalTitle(titleValue);
@@ -89,78 +92,70 @@ export default function TodoTaskModal({
     };
   }, []);
 
- const fetchTask = useCallback(async () => {
-  if (!taskId) return;
+  const fetchTask = useCallback(async () => {
+    if (!taskId) return;
 
-  setLoading(true);
-  const res = await fetch(`/api/todo/tasks/${taskId}`);
-  const data = await res.json();
+    setLoading(true);
+    const res = await fetch(`/api/todo/tasks/${taskId}`);
+    const data = await res.json();
 
-  // Ensure values object exists
-  if (!data.values) {
-    data.values = {};
-  }
+    if (!data.values) {
+      data.values = {};
+    }
 
-  setTask(data);
-
-  // Use direct title field from schema
-  setLocalTitle(data.title || "");
-  isEditingTitle.current = false; // Reset editing flag
-
-  setLoading(false);
-}, [taskId, properties]);
-
+    setTask(data);
+    setLocalTitle(data.title || "");
+    isEditingTitle.current = false;
+    setLoading(false);
+  }, [taskId]);
 
   useEffect(() => {
     if (!isOpen) return;
     fetchTask();
   }, [isOpen, fetchTask]);
-const updateValues = async (newValues: any) => {
-  if (!task) {
-    console.log("updateValues - No task found");
-    return;
-  }
 
-  console.log("updateValues - Updating task:", task._id);
-  console.log("updateValues - New values:", newValues);
-
-  // Optimistic UI update - ensure values object exists
-  setTask({ ...task, values: newValues || {} });
-
-  try {
-    const response = await fetch(`/api/todo/tasks/${task._id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ values: newValues }),
-    });
-
-    if (!response.ok) {
-      console.error("updateValues - API error:", response.status, response.statusText);
-      const errorData = await response.json().catch(() => ({}));
-      console.error("updateValues - Error data:", errorData);
+  const updateValues = async (newValues: any) => {
+    if (!task) {
+      console.log("updateValues - No task found");
       return;
     }
 
-    const updatedTask = await response.json();
-    console.log("updateValues - Successfully updated task:", updatedTask);
-    
-    // Ensure values exists in updated task
-    if (!updatedTask.values) {
-      updatedTask.values = {};
-    }
-    
-    // Update task with server response
-    setTask(updatedTask);
-  } catch (error) {
-    console.error("updateValues - Fetch error:", error);
-  }
-};
+    console.log("updateValues - Updating task:", task._id);
+    console.log("updateValues - New values:", newValues);
 
+    setTask({ ...task, values: newValues || {} });
+
+    try {
+      const response = await fetch(`/api/todo/tasks/${task._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ values: newValues }),
+      });
+
+      if (!response.ok) {
+        console.error("updateValues - API error:", response.status, response.statusText);
+        const errorData = await response.json().catch(() => ({}));
+        console.error("updateValues - Error data:", errorData);
+        return;
+      }
+
+      const updatedTask = await response.json();
+      console.log("updateValues - Successfully updated task:", updatedTask);
+
+      if (!updatedTask.values) {
+        updatedTask.values = {};
+      }
+
+      setTask(updatedTask);
+    } catch (error) {
+      console.error("updateValues - Fetch error:", error);
+    }
+  };
 
   const setValue = (propId: string, value: any) => {
     console.log("setValue called - propId:", propId, "value:", value);
     console.log("task before setValue:", task);
-    
+
     if (!task) {
       console.log("No task, returning...");
       return;
@@ -182,7 +177,6 @@ const updateValues = async (newValues: any) => {
     return `https://${v}`;
   };
 
-  // Separate properties into filled and empty
   const filledProps = useMemo(() => {
     if (!task) return [];
     return properties.filter((p) => {
@@ -211,6 +205,12 @@ const updateValues = async (newValues: any) => {
     });
   }, [properties, task]);
 
+  const selectClass = `w-full border rounded-md px-3 py-2 text-sm ${
+    isDark
+      ? "bg-[#18191d] border-gray-700 text-gray-100"
+      : "bg-white border-gray-200 text-gray-900"
+  }`;
+
   const renderPropertyInput = (p: Property) => {
     if (!task) return null;
     const v = task.values?.[p._id] ?? (task.values || {})[p._id];
@@ -234,8 +234,7 @@ const updateValues = async (newValues: any) => {
             placeholder="Enter number..."
           />
         );
-        
-        
+
       case "date": {
         const dateValue = v ? new Date(v).toISOString().split("T")[0] : "";
         return (
@@ -246,38 +245,37 @@ const updateValues = async (newValues: any) => {
           />
         );
       }
+
       case "email": {
-  const sendEmail = async (email: string) => {
-    try {
-      await fetch("/api/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-    } catch (err) {
-      console.error("Email send failed", err);
-    }
-  };
+        const sendEmail = async (email: string) => {
+          try {
+            await fetch("/api/send-email", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ email }),
+            });
+          } catch (err) {
+            console.error("Email send failed", err);
+          }
+        };
 
-  return (
-    <Input
-      type="email"
-      value={v || ""}
-      placeholder="email@example.com"
-      onChange={(e) => setValue(p._id, e.target.value)}
-      onBlur={(e) => {
-        const email = e.target.value;
-
-        // basic validation
-        if (email && email.includes("@")) {
-          sendEmail(email); // ✅ API call
-        }
-      }}
-    />
-  );
-}
+        return (
+          <Input
+            type="email"
+            value={v || ""}
+            placeholder="email@example.com"
+            onChange={(e) => setValue(p._id, e.target.value)}
+            onBlur={(e) => {
+              const email = e.target.value;
+              if (email && email.includes("@")) {
+                sendEmail(email);
+              }
+            }}
+          />
+        );
+      }
 
       case "checkbox":
         return (
@@ -295,7 +293,7 @@ const updateValues = async (newValues: any) => {
           <select
             value={v || ""}
             onChange={(e) => setValue(p._id, e.target.value)}
-            className="w-full border rounded-md px-3 py-2 bg-white text-sm"
+            className={selectClass}
           >
             <option value="">Select...</option>
             {(p.options || []).map((opt) => (
@@ -325,7 +323,7 @@ const updateValues = async (newValues: any) => {
                         multiValues.filter((t) => t !== tag)
                       )
                     }
-                    className="hover:text-gray-900"
+                    className={isDark ? "hover:text-gray-200" : "hover:text-gray-900"}
                   >
                     ×
                   </button>
@@ -339,7 +337,7 @@ const updateValues = async (newValues: any) => {
                   setValue(p._id, [...multiValues, e.target.value]);
                 }
               }}
-              className="w-full border rounded-md px-3 py-2 bg-white text-sm"
+              className={selectClass}
             >
               <option value="">Select an option...</option>
               {(p.options || []).map((opt) => (
@@ -410,7 +408,6 @@ const updateValues = async (newValues: any) => {
     }
   };
 
-  // Update title function
   const updateTitle = async (newTitle: string) => {
     if (!task) return;
 
@@ -440,188 +437,189 @@ const updateValues = async (newValues: any) => {
 
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={(v) => {
-  if (!v) {
-    console.log("TodoTaskModal - Modal closing, calling onClose and onUpdated");
-    
-    // Flush any pending title changes before closing
-    if (titleDebounceTimer.current) {
-      clearTimeout(titleDebounceTimer.current);
-      console.log("TodoTaskModal - Flushing pending title update");
-      if (task) {
-        updateTitle(localTitle).then(() => {
-          isEditingTitle.current = false;
-        });
-      }
-    } else {
-      isEditingTitle.current = false;
-    }
-    
-    onClose();
-    // Small delay to ensure save completes
-    setTimeout(() => {
-      onUpdated();
-    }, 100);
-  }
-}}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-4">
-          <DialogTitle className="text-xl font-semibold">Task Details</DialogTitle>
-        </DialogHeader>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(v) => {
+          if (!v) {
+            console.log("TodoTaskModal - Modal closing, calling onClose and onUpdated");
 
-        {loading || !task ? (
-          <div className="p-6 text-sm text-gray-500">Loading...</div>
-        ) : (
-          <>
-            {/* TITLE */}
-            <div className="px-6">
-              <input
-                autoFocus
-                value={localTitle}
-                onChange={(e) => {
-                  const newValue = e.target.value;
-                  console.log("Title onChange triggered:", newValue);
-                  
-                  // Mark that user is editing
-                  isEditingTitle.current = true;
-                  
-                  // Update local state immediately for UI responsiveness
-                  setLocalTitle(newValue);
-                  
-                  // Debounce the API call
-                  if (titleDebounceTimer.current) {
-                    clearTimeout(titleDebounceTimer.current);
-                  }
-                  
-                  titleDebounceTimer.current = setTimeout(() => {
-                    console.log("Title debounce - Saving to database:", newValue);
-                    updateTitle(newValue).then(() => {
-                      // Mark editing as complete after save
-                      isEditingTitle.current = false;
-                    });
-                  }, 500); // Save 500ms after user stops typing
-                }}
-                onBlur={() => {
-                  // When user leaves the field, mark editing as complete
+            if (titleDebounceTimer.current) {
+              clearTimeout(titleDebounceTimer.current);
+              console.log("TodoTaskModal - Flushing pending title update");
+              if (task) {
+                updateTitle(localTitle).then(() => {
                   isEditingTitle.current = false;
-                }}
-                placeholder="Untitled"
-                className="w-full text-3xl font-bold outline-none border-b-2 border-transparent hover:border-gray-200 focus:border-blue-500 transition-colors pb-2 bg-transparent"
-              />
+                });
+              }
+            } else {
+              isEditingTitle.current = false;
+            }
+
+            onClose();
+            setTimeout(() => {
+              onUpdated();
+            }, 100);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <DialogTitle className="text-xl font-semibold">Task Details</DialogTitle>
+          </DialogHeader>
+
+          {loading || !task ? (
+            <div className={`p-6 text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              Loading...
             </div>
+          ) : (
+            <>
+              {/* TITLE */}
+              <div className="px-6">
+                <input
+                  autoFocus
+                  value={localTitle}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    console.log("Title onChange triggered:", newValue);
 
-            <Separator />
+                    isEditingTitle.current = true;
+                    setLocalTitle(newValue);
 
-            {/* PROPERTIES */}
-            <ScrollArea className="max-h-[60vh]">
-              <div className="px-6 py-5 space-y-8">
-                {/* Properties header */}
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold uppercase text-muted-foreground">
-                    Properties
-                  </div>
+                    if (titleDebounceTimer.current) {
+                      clearTimeout(titleDebounceTimer.current);
+                    }
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      console.log("Add Property button clicked");
-                      setShowAddProp(true);
-                    }}
-                  >
-                    + Add Property
-                  </Button>
-                </div>
-
-                {properties.length === 0 && (
-                  <div className="py-10 text-center text-muted-foreground">
-                    <div>No properties available yet.</div>
-                    <div className="text-sm mt-1">
-                      Click + Add Property to create fields for your tasks.
-                    </div>
-                  </div>
-                )}
-
-                {/* Filled properties */}
-                {filledProps.length > 0 && (
-                  <div className="space-y-5">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-primary">
-                      Filled Properties
-                    </div>
-
-                    {filledProps.map((p) => (
-                      <div key={p._id} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Label>{p.name}</Label>
-                          <Badge variant="outline" className="text-[10px]">
-                            {p.type}
-                          </Badge>
-                        </div>
-                        {renderPropertyInput(p)}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Empty properties */}
-                {emptyProps.length > 0 && (
-                  <div className="space-y-5">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Empty Properties
-                    </div>
-
-                    {emptyProps.map((p) => (
-                      <div key={p._id} className="space-y-2 opacity-70">
-                        <div className="flex items-center gap-2">
-                          <Label className="text-muted-foreground">
-                            {p.name}
-                          </Label>
-                          <Badge variant="outline" className="text-[10px]">
-                            {p.type}
-                          </Badge>
-                        </div>
-                        {renderPropertyInput(p)}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                    titleDebounceTimer.current = setTimeout(() => {
+                      console.log("Title debounce - Saving to database:", newValue);
+                      updateTitle(newValue).then(() => {
+                        isEditingTitle.current = false;
+                      });
+                    }, 500);
+                  }}
+                  onBlur={() => {
+                    isEditingTitle.current = false;
+                  }}
+                  placeholder="Untitled"
+                  className={`w-full text-3xl font-bold outline-none border-b-2 border-transparent pb-2 bg-transparent transition-colors ${
+                    isDark
+                      ? "hover:border-gray-700 focus:border-blue-500 text-gray-100"
+                      : "hover:border-gray-200 focus:border-blue-500 text-gray-900"
+                  }`}
+                />
               </div>
-            </ScrollArea>
 
-            <Separator />
+              <Separator />
 
-            {/* Footer */}
-            <div className="flex items-center justify-end gap-2 px-6 py-4">
-              <Button variant="outline" onClick={onClose}>
-                Close
-              </Button>
-            </div>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+              {/* PROPERTIES */}
+              <ScrollArea className="max-h-[60vh]">
+                <div className="px-6 py-5 space-y-8">
+                  {/* Properties header */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold uppercase text-muted-foreground">
+                      Properties
+                    </div>
 
-    {/* Add Property Modal - Outside main Dialog to prevent z-index issues */}
-    {showAddProp && (
-      <>
-        {console.log("Rendering AddPropertyPicker modal")}
-        <AddPropertyPicker
-          open={showAddProp}
-          properties={properties}
-          visiblePropIds={[]}
-          databaseId={databaseId}
-          onPick={async () => {
-            setShowAddProp(false);
-            await onUpdated();
-          }}
-          onPropertyCreated={async () => {
-            await onUpdated();
-            setShowAddProp(false);
-          }}
-          onClose={() => setShowAddProp(false)}
-        />
-      </>
-    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        console.log("Add Property button clicked");
+                        setShowAddProp(true);
+                      }}
+                    >
+                      + Add Property
+                    </Button>
+                  </div>
+
+                  {properties.length === 0 && (
+                    <div className="py-10 text-center text-muted-foreground">
+                      <div>No properties available yet.</div>
+                      <div className="text-sm mt-1">
+                        Click + Add Property to create fields for your tasks.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Filled properties */}
+                  {filledProps.length > 0 && (
+                    <div className="space-y-5">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-primary">
+                        Filled Properties
+                      </div>
+
+                      {filledProps.map((p) => (
+                        <div key={p._id} className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Label>{p.name}</Label>
+                            <Badge variant="outline" className="text-[10px]">
+                              {p.type}
+                            </Badge>
+                          </div>
+                          {renderPropertyInput(p)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Empty properties */}
+                  {emptyProps.length > 0 && (
+                    <div className="space-y-5">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Empty Properties
+                      </div>
+
+                      {emptyProps.map((p) => (
+                        <div key={p._id} className="space-y-2 opacity-70">
+                          <div className="flex items-center gap-2">
+                            <Label className="text-muted-foreground">
+                              {p.name}
+                            </Label>
+                            <Badge variant="outline" className="text-[10px]">
+                              {p.type}
+                            </Badge>
+                          </div>
+                          {renderPropertyInput(p)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+
+              <Separator />
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-2 px-6 py-4">
+                <Button variant="outline" onClick={onClose}>
+                  Close
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Property Modal */}
+      {showAddProp && (
+        <>
+          {console.log("Rendering AddPropertyPicker modal")}
+          <AddPropertyPicker
+            open={showAddProp}
+            properties={properties}
+            visiblePropIds={[]}
+            databaseId={databaseId}
+            onPick={async () => {
+              setShowAddProp(false);
+              await onUpdated();
+            }}
+            onPropertyCreated={async () => {
+              await onUpdated();
+              setShowAddProp(false);
+            }}
+            onClose={() => setShowAddProp(false)}
+          />
+        </>
+      )}
     </>
   );
 }

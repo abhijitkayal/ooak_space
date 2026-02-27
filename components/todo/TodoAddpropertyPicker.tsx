@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,9 @@ export default function AddPropertyPicker({
   onClose: () => void;
   open: boolean;
 }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const [creating, setCreating] = useState(false);
 
   const createAndAddProperty = async (type: string, label: string) => {
@@ -113,7 +117,7 @@ export default function AddPropertyPicker({
           {/* Existing Properties */}
           {hiddenProps.length > 0 && (
             <>
-              <div className="px-4 py-2 text-xs font-semibold text-muted-foreground bg-muted">
+              <div className={`px-4 py-2 text-xs font-semibold ${isDark ? "text-gray-400 bg-[#18191d]" : "text-muted-foreground bg-muted"}`}>
                 EXISTING PROPERTIES
               </div>
 
@@ -121,7 +125,11 @@ export default function AddPropertyPicker({
                 <button
                   key={p._id}
                   onClick={() => onPick(p._id)}
-                  className="w-full px-4 py-2.5 text-left text-sm flex items-center justify-between hover:bg-muted border-b"
+                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between border-b ${
+                    isDark 
+                      ? "hover:bg-gray-800 border-gray-700" 
+                      : "hover:bg-muted border-gray-200"
+                  }`}
                 >
                   <span className="font-medium">{p.name}</span>
                   <span className="text-xs text-muted-foreground capitalize">
@@ -133,7 +141,7 @@ export default function AddPropertyPicker({
           )}
 
           {/* Create New */}
-          <div className="px-4 py-2 text-xs font-semibold text-muted-foreground bg-muted">
+          <div className={`px-4 py-2 text-xs font-semibold ${isDark ? "text-gray-400 bg-[#18191d]" : "text-muted-foreground bg-muted"}`}>
             CREATE NEW PROPERTY
           </div>
 
@@ -142,7 +150,11 @@ export default function AddPropertyPicker({
               key={type}
               onClick={() => createAndAddProperty(type, label)}
               disabled={creating}
-              className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 hover:bg-blue-50 border-b disabled:opacity-50"
+              className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 border-b disabled:opacity-50 ${
+                isDark 
+                  ? "hover:bg-blue-900/30 border-gray-700" 
+                  : "hover:bg-blue-50 border-gray-200"
+              }`}
             >
               <span className="w-6 text-center">{icon}</span>
               <span className="flex-1 font-medium">{label}</span>
