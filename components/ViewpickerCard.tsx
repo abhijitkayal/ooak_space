@@ -925,387 +925,9 @@
 //   return <div className="text-[11px] text-gray-600">Numbered list preview</div>;
 // }
 
-// "use client";
-
-// import { useState } from "react";
-// import { useWorkspaceStore, ViewType } from "@/app/store/WorkspaceStore";
-// import { Search, X } from "lucide-react";
-
-// const OPTIONS: {
-//   type: ViewType;
-//   title: string;
-//   desc: string;
-//   icon: string;
-// }[] = [
-//   { type: "timeline", title: "Timeline", desc: "Plan by dates", icon: "🗓" },
-//   { type: "table", title: "Table", desc: "Rows & properties", icon: "📊" },
-//   { type: "board", title: "Board", desc: "Kanban workflow", icon: "🧩" },
-//   { type: "gallery", title: "Gallery", desc: "Cards layout", icon: "🖼" },
-//   { type: "todo", title: "ToDo", desc: "Task list", icon: "✅" },
-//   { type: "text", title: "Text", desc: "Text content", icon: "📝" },
-//   { type: "heading", title: "Heading", desc: "Heading content", icon: "📌" },
-//   { type: "bullatedlist", title: "Bulleted List", desc: "Bulleted list content", icon: "•" },
-//   { type: "numberlist", title: "Numbered List", desc: "Numbered list content", icon: "1." },
-// ];
-
-// // Template data for each view type
-// const TEMPLATES = {
-//   table: [
-//     { id: 1, name: "Blank Table", desc: "Start from scratch" },
-//     { id: 2, name: "Project Tracker", desc: "Track project status and deadlines" },
-//     { id: 3, name: "Budget Tracking", desc: "Monitor expenses and budgets" },
-//   ],
-//   board: [
-//     { id: 1, name: "Blank Board", desc: "Start from scratch" },
-//     { id: 2, name: "Sprint Planning", desc: "Organize sprint tasks" },
-//     { id: 3, name: "Content Calendar", desc: "Plan your content strategy" },
-//   ],
-//   timeline: [
-//     { id: 1, name: "Blank Timeline", desc: "Start from scratch" },
-//     { id: 2, name: "Project Timeline", desc: "Gantt chart for project planning" },
-//     { id: 3, name: "Product Roadmap", desc: "Visualize product development" },
-//   ],
-//   gallery: [
-//     { id: 1, name: "Blank Gallery", desc: "Start from scratch" },
-//     { id: 2, name: "Design Portfolio", desc: "Showcase your designs" },
-//     { id: 3, name: "Product Catalog", desc: "Display products in cards" },
-//   ],
-//   todo: [
-//     { id: 1, name: "Blank Todo", desc: "Start from scratch" },
-//     { id: 2, name: "Daily Tasks", desc: "Organize your daily work" },
-//     { id: 3, name: "Checklist", desc: "Simple checklist template" },
-//   ],
-//   text: [
-//     { id: 1, name: "Blank Text", desc: "Start from scratch" },
-//     { id: 2, name: "Documentation", desc: "Create documentation" },
-//     { id: 3, name: "Meeting Notes", desc: "Take notes during meetings" },
-//   ],
-//   heading: [
-//     { id: 1, name: "Blank Heading", desc: "Start from scratch" },
-//     { id: 2, name: "Section Header", desc: "Organize content sections" },
-//   ],
-//   bullatedlist: [
-//     { id: 1, name: "Blank List", desc: "Start from scratch" },
-//     { id: 2, name: "Feature List", desc: "List product features" },
-//   ],
-//   numberlist: [
-//     { id: 1, name: "Blank List", desc: "Start from scratch" },
-//     { id: 2, name: "Step by Step", desc: "Create ordered instructions" },
-//   ],
-// };
-
-// export default function ViewPickerCard({
-//   projectId,
-//   onDone,
-// }: {
-//   projectId: string;
-//   onDone: () => void;
-// }) {
-//   const [selectedCategory, setSelectedCategory] = useState<ViewType>("table");
-//   const [searchQuery, setSearchQuery] = useState("");
-//   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
-
-//   const { fetchDatabases } = useWorkspaceStore();
-
-//   const createDbFromTemplate = async (templateId: number) => {
-//     const template = (TEMPLATES[selectedCategory] || []).find(t => t.id === templateId);
-//     if (!template) return;
-
-//     const payload = {
-//       projectId,
-//       name: template.name,
-//       icon: OPTIONS.find((o) => o.type === selectedCategory)?.icon || "📄",
-//       viewType: selectedCategory,
-//       ...(templateId > 1 && {
-//         rows: [
-//           { name: "Task 1", status: "Todo", date: "2026-02-10" },
-//           { name: "Task 2", status: "Doing", date: "2026-02-12" },
-//           { name: "Task 3", status: "Done", date: "2026-02-15" },
-//         ],
-//       }),
-//     };
-
-//     await fetch("/api/databases", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify(payload),
-//     });
-
-//     await fetchDatabases(projectId);
-//     onDone();
-//   };
-
-//   const templates = TEMPLATES[selectedCategory] || [];
-
-//   return (
-//     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4 sm:p-6">
-//       <div className="w-full max-w-7xl h-[90vh] overflow-hidden rounded-2xl border bg-white shadow-2xl flex flex-col">
-//         {/* Header */}
-//         <div className="border-b px-6 py-4 flex items-center justify-between">
-//           <h1 className="text-2xl font-bold">Create a design</h1>
-//           <button onClick={onDone} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="Close">
-//             <X className="w-5 h-5" />
-//           </button>
-//         </div>
-
-//         {/* Search Bar */}
-//         {/* <div className="px-6 py-4 border-b">
-//           <div className="relative max-w-xl">
-//             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-//             <input
-//               type="text"
-//               value={searchQuery}
-//               onChange={(e) => setSearchQuery(e.target.value)}
-//               placeholder="What would you like to create?"
-//               className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-//             />
-//           </div>
-//         </div> */}
-
-//         {/* Main Content */}
-//         <div className="flex flex-1 overflow-hidden">
-//         {/* Left Sidebar */}
-//         <div className="w-64 border-r bg-gray-50 overflow-y-auto">
-//           <div className="p-4">
-//             <div className="mb-4">
-//               <div className="flex items-center gap-2 px-3 py-2 text-sm font-semibold">
-//                 ✨ For you
-//               </div>
-//             </div>
-
-//             <div className="space-y-1">
-//               {OPTIONS.map((option) => (
-//                 <button
-//                   key={option.type}
-//                   onClick={() => setSelectedCategory(option.type)}
-//                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition ${
-//                     selectedCategory === option.type
-//                       ? "bg-white shadow-sm font-medium"
-//                       : "hover:bg-gray-100"
-//                   }`}
-//                 >
-//                   <span className="text-xl">{option.icon}</span>
-//                   <div className="flex-1">
-//                     <div className="text-sm font-medium">{option.title}</div>
-//                     <div className="text-xs text-gray-500">{option.desc}</div>
-//                   </div>
-//                 </button>
-//               ))}
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Right Content Area */}
-//         <div className="flex-1 overflow-y-auto bg-white">
-//           <div className="p-8">
-//             {/* Section Title */}
-//             <div className="mb-6">
-//               <h2 className="text-xl font-bold mb-2">
-//                 {OPTIONS.find((o) => o.type === selectedCategory)?.title} templates
-//               </h2>
-//               <p className="text-sm text-gray-600">
-//                 {OPTIONS.find((o) => o.type === selectedCategory)?.desc}
-//               </p>
-//             </div>
-
-//             {/* Templates Grid */}
-//             <div className="grid grid-cols-2 xl:grid-cols-3 gap-6">
-//               {templates.map((template) => (
-//                 <button
-//                   key={template.id}
-//                   onClick={() => createDbFromTemplate(template.id)}
-//                   onMouseEnter={() => setSelectedTemplate(template.id)}
-//                   onMouseLeave={() => setSelectedTemplate(null)}
-//                   className="group relative aspect-4/3 rounded-xl border-2 border-gray-200 overflow-hidden hover:border-blue-500 transition-all hover:shadow-lg"
-//                 >
-//                   {/* Preview Area */}
-//                   <div className="absolute inset-0 bg-linear-to-br from-gray-50 to-gray-100 p-4">
-//                     <div className="h-full flex items-center justify-center">
-//                       {selectedCategory === "table" && (
-//                         <TableTemplatePreview templateId={template.id} />
-//                       )}
-//                       {selectedCategory === "board" && (
-//                         <BoardTemplatePreview templateId={template.id} />
-//                       )}
-//                       {selectedCategory === "timeline" && (
-//                         <TimelineTemplatePreview templateId={template.id} />
-//                       )}
-//                       {selectedCategory === "gallery" && (
-//                         <GalleryTemplatePreview templateId={template.id} />
-//                       )}
-//                       {selectedCategory === "todo" && (
-//                         <TodoTemplatePreview templateId={template.id} />
-//                       )}
-//                       {(selectedCategory === "text" ||
-//                         selectedCategory === "heading" ||
-//                         selectedCategory === "bullatedlist" ||
-//                         selectedCategory === "numberlist") && (
-//                         <GenericTemplatePreview type={selectedCategory} />
-//                       )}
-//                     </div>
-//                   </div>
-
-//                   {/* Template Info */}
-//                   <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 border-t">
-//                     <h3 className="font-semibold text-sm">{template.name}</h3>
-//                     <p className="text-xs text-gray-600 mt-1">{template.desc}</p>
-//                   </div>
-
-//                   {/* Hover Overlay */}
-//                   {selectedTemplate === template.id && (
-//                     <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center">
-//                       <div className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium">
-//                         Create
-//                       </div>
-//                     </div>
-//                   )}
-//                 </button>
-//               ))}
-//             </div>
-//           </div>
-//         </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// /* -------- TEMPLATE PREVIEW COMPONENTS -------- */
-
-// function TableTemplatePreview({ templateId }: { templateId: number }) {
-//   if (templateId === 1) {
-//     return (
-//       <div className="w-full bg-white rounded-lg p-3 text-[10px]">
-//         <div className="grid grid-cols-3 gap-2 font-semibold text-gray-700">
-//           <div>Name</div>
-//           <div>Status</div>
-//           <div>Date</div>
-//         </div>
-//         <div className="mt-2 space-y-1">
-//           <div className="h-5 bg-gray-100 rounded" />
-//           <div className="h-5 bg-gray-100 rounded" />
-//         </div>
-//       </div>
-//     );
-//   }
-  
-//   return (
-//     <div className="w-full bg-white rounded-lg p-3 text-[10px]">
-//       <div className="grid grid-cols-3 gap-2 font-semibold text-gray-700">
-//         <div>Task</div>
-//         <div>Status</div>
-//         <div>Due</div>
-//       </div>
-//       <div className="mt-2 space-y-1">
-//         {[1, 2, 3].map((i) => (
-//           <div key={i} className="grid grid-cols-3 gap-2">
-//             <div>Task {i}</div>
-//             <div className="text-green-600">●</div>
-//             <div>Feb {10 + i}</div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-
-// function BoardTemplatePreview({ templateId }: { templateId: number }) {
-//   return (
-//     <div className="w-full grid grid-cols-3 gap-2 text-[9px]">
-//       {["Todo", "Doing", "Done"].map((col) => (
-//         <div key={col} className="rounded-md bg-white p-2">
-//           <div className="font-semibold text-gray-700">{col}</div>
-//           <div className="mt-2 space-y-1">
-//             {templateId === 1 ? (
-//               <div className="h-6 bg-gray-100 rounded" />
-//             ) : (
-//               <>
-//                 <div className="h-6 bg-blue-100 rounded flex items-center px-1 text-[8px]">
-//                   Task {col[0]}
-//                 </div>
-//                 <div className="h-6 bg-purple-100 rounded flex items-center px-1 text-[8px]">
-//                   Task {col[1]}
-//                 </div>
-//               </>
-//             )}
-//           </div>
-//         </div>
-//       ))}
-//     </div>
-//   );
-// }
-
-// function TimelineTemplatePreview({ templateId }: { templateId: number }) {
-//   return (
-//     <div className="w-full bg-white rounded-lg p-3">
-//       <div className="text-[9px] text-gray-500 mb-2">
-//         {templateId === 1 ? "Empty timeline" : "Feb 2026"}
-//       </div>
-//       <div className="relative h-16">
-//         <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-red-300" />
-//         {templateId > 1 && (
-//           <>
-//             <div className="absolute top-1 left-2 right-1/2 h-5 bg-blue-200 rounded-sm text-[8px] flex items-center px-1">
-//               Task 1
-//             </div>
-//             <div className="absolute top-7 left-8 right-1/3 h-5 bg-green-200 rounded-sm text-[8px] flex items-center px-1">
-//               Task 2
-//             </div>
-//           </>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-// function GalleryTemplatePreview({ templateId }: { templateId: number }) {
-//   return (
-//     <div className="w-full grid grid-cols-3 gap-2">
-//       {[1, 2, 3].map((i) => (
-//         <div key={i} className="rounded-md bg-white overflow-hidden">
-//           <div className={`h-12 ${templateId === 1 ? "bg-gray-100" : "bg-linear-to-br from-blue-100 to-purple-100"}`} />
-//           <div className="p-1 text-[8px] font-semibold">
-//             {templateId === 1 ? "" : `Item ${i}`}
-//           </div>
-//         </div>
-//       ))}
-//     </div>
-//   );
-// }
-
-// function TodoTemplatePreview({ templateId }: { templateId: number }) {
-//   return (
-//     <div className="w-full bg-white rounded-lg p-3">
-//       <div className="space-y-2">
-//         {[1, 2, 3].map((i) => (
-//           <div key={i} className="flex items-center gap-2 text-[10px]">
-//             <div className="w-3 h-3 rounded border-2 border-gray-300" />
-//             <div className="text-gray-700">
-//               {templateId === 1 ? `Task ${i}` : `Daily task ${i}`}
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-
-// function GenericTemplatePreview({ type }: { type: string }) {
-//   return (
-//     <div className="w-full bg-white rounded-lg p-4 flex items-center justify-center">
-//       <div className="text-4xl">
-//         {type === "text" && "📝"}
-//         {type === "heading" && "📌"}
-//         {type === "bullatedlist" && "•"}
-//         {type === "numberlist" && "1."}
-//       </div>
-//     </div>
-//   );
-// }
 "use client";
 
 import { useState } from "react";
-import { useTheme } from "next-themes";
 import { useWorkspaceStore, ViewType } from "@/app/store/WorkspaceStore";
 import { Search, X } from "lucide-react";
 
@@ -1372,7 +994,7 @@ const TEMPLATES = {
     { id: 2, name: "Step by Step", desc: "Create ordered instructions" },
   ],
   pagelink: [
-    { id: 1, name: "Page Link", desc: "Link to another page" },
+    { id: 1, name: "Blank List", desc: "Start from scratch" },
     // { id: 2, name: "Step by Step", desc: "Create ordered instructions" },
   ],
 };
@@ -1384,9 +1006,6 @@ export default function ViewPickerCard({
   projectId: string;
   onDone: () => void;
 }) {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
-
   const [selectedCategory, setSelectedCategory] = useState<ViewType>("table");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
@@ -1424,52 +1043,40 @@ export default function ViewPickerCard({
   const templates = TEMPLATES[selectedCategory] || [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6">
-      <div className={`w-full max-w-7xl h-[90vh] overflow-hidden rounded-2xl border shadow-2xl flex flex-col ${isDark ? "bg-[#1e1f23] border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4 sm:p-6">
+      <div className="w-full max-w-7xl h-[90vh] overflow-hidden rounded-2xl border bg-white shadow-2xl flex flex-col">
         {/* Header */}
-        <div className={`border-b px-6 py-4 flex items-center justify-between ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-          <h1 className={`text-2xl font-bold ${isDark ? "text-gray-100" : "text-gray-900"}`}>Create a design</h1>
-          <button onClick={onDone} className={`p-2 rounded-lg ${isDark ? "hover:bg-gray-800 text-gray-400" : "hover:bg-gray-100 text-gray-600"}`} aria-label="Close">
+        <div className="border-b px-6 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Create a design</h1>
+          <button onClick={onDone} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* Search Bar */}
+        {/* <div className="px-6 py-4 border-b">
+          <div className="relative max-w-xl">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="What would you like to create?"
+              className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div> */}
+
         {/* Main Content */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Left Sidebar */}
-          <div className={`w-64 border-r overflow-y-auto ${isDark ? "bg-[#18191d] border-gray-800" : "bg-gray-50 border-gray-200"}`}>
-            <div className="p-4">
-              <div className="mb-4">
-                <div className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                  ✨ For you
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                {OPTIONS.map((option) => (
-                  <button
-                    key={option.type}
-                    onClick={() => setSelectedCategory(option.type)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition ${
-                      selectedCategory === option.type
-                        ? isDark
-                          ? "bg-[#1e1f23] shadow-sm font-medium text-gray-100"
-                          : "bg-white shadow-sm font-medium text-gray-900"
-                        : isDark
-                          ? "hover:bg-[#1e1f23] text-gray-400"
-                          : "hover:bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    <span className="text-xl">{option.icon}</span>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium">{option.title}</div>
-                      <div className={`text-xs ${isDark ? "text-gray-500" : "text-gray-500"}`}>{option.desc}</div>
-                    </div>
-                  </button>
-                ))}
+        {/* Left Sidebar */}
+        <div className="w-64 border-r bg-gray-50 overflow-y-auto">
+          <div className="p-4">
+            <div className="mb-4">
+              <div className="flex items-center gap-2 px-3 py-2 text-sm font-semibold">
+                ✨ For you
               </div>
             </div>
-<<<<<<< HEAD
 
             {/* Left Sidebar */}
 <div className="w-64 border-r bg-gray-50 overflow-y-auto">
@@ -1535,79 +1142,78 @@ export default function ViewPickerCard({
 
   </div>
 </div>
-=======
->>>>>>> ab601d67cb96a504ff2e228fc1c10493f3acde94
           </div>
+        </div>
 
-          {/* Right Content Area */}
-          <div className={`flex-1 overflow-y-auto ${isDark ? "bg-[#1e1f23]" : "bg-white"}`}>
-            <div className="p-8">
-              {/* Section Title */}
-              <div className="mb-6">
-                <h2 className={`text-xl font-bold mb-2 ${isDark ? "text-gray-100" : "text-gray-900"}`}>
-                  {OPTIONS.find((o) => o.type === selectedCategory)?.title} templates
-                </h2>
-                <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                  {OPTIONS.find((o) => o.type === selectedCategory)?.desc}
-                </p>
-              </div>
+        {/* Right Content Area */}
+        <div className="flex-1 overflow-y-auto bg-white">
+          <div className="p-8">
+            {/* Section Title */}
+            <div className="mb-6">
+              <h2 className="text-xl font-bold mb-2">
+                {OPTIONS.find((o) => o.type === selectedCategory)?.title} templates
+              </h2>
+              <p className="text-sm text-gray-600">
+                {OPTIONS.find((o) => o.type === selectedCategory)?.desc}
+              </p>
+            </div>
 
-              {/* Templates Grid */}
-              <div className="grid grid-cols-2 xl:grid-cols-3 gap-6">
-                {templates.map((template) => (
-                  <button
-                    key={template.id}
-                    onClick={() => createDbFromTemplate(template.id)}
-                    onMouseEnter={() => setSelectedTemplate(template.id)}
-                    onMouseLeave={() => setSelectedTemplate(null)}
-                    className={`group relative aspect-4/3 rounded-xl border-2 overflow-hidden hover:border-blue-500 transition-all hover:shadow-lg ${isDark ? "border-gray-700" : "border-gray-200"}`}
-                  >
-                    {/* Preview Area */}
-                    <div className={`absolute inset-0 p-4 ${isDark ? "bg-gradient-to-br from-[#18191d] to-[#1e1f23]" : "bg-gradient-to-br from-gray-50 to-gray-100"}`}>
-                      <div className="h-full flex items-center justify-center">
-                        {selectedCategory === "table" && (
-                          <TableTemplatePreview templateId={template.id} isDark={isDark} />
-                        )}
-                        {selectedCategory === "board" && (
-                          <BoardTemplatePreview templateId={template.id} isDark={isDark} />
-                        )}
-                        {selectedCategory === "timeline" && (
-                          <TimelineTemplatePreview templateId={template.id} isDark={isDark} />
-                        )}
-                        {selectedCategory === "gallery" && (
-                          <GalleryTemplatePreview templateId={template.id} isDark={isDark} />
-                        )}
-                        {selectedCategory === "todo" && (
-                          <TodoTemplatePreview templateId={template.id} isDark={isDark} />
-                        )}
-                        {(selectedCategory === "text" ||
-                          selectedCategory === "heading" ||
-                          selectedCategory === "bullatedlist" ||
-                          selectedCategory === "numberlist") && (
-                          <GenericTemplatePreview type={selectedCategory} />
-                        )}
+            {/* Templates Grid */}
+            <div className="grid grid-cols-2 xl:grid-cols-3 gap-6">
+              {templates.map((template) => (
+                <button
+                  key={template.id}
+                  onClick={() => createDbFromTemplate(template.id)}
+                  onMouseEnter={() => setSelectedTemplate(template.id)}
+                  onMouseLeave={() => setSelectedTemplate(null)}
+                  className="group relative aspect-4/3 rounded-xl border-2 border-gray-200 overflow-hidden hover:border-blue-500 transition-all hover:shadow-lg"
+                >
+                  {/* Preview Area */}
+                  <div className="absolute inset-0 bg-linear-to-br from-gray-50 to-gray-100 p-4">
+                    <div className="h-full flex items-center justify-center">
+                      {selectedCategory === "table" && (
+                        <TableTemplatePreview templateId={template.id} />
+                      )}
+                      {selectedCategory === "board" && (
+                        <BoardTemplatePreview templateId={template.id} />
+                      )}
+                      {selectedCategory === "timeline" && (
+                        <TimelineTemplatePreview templateId={template.id} />
+                      )}
+                      {selectedCategory === "gallery" && (
+                        <GalleryTemplatePreview templateId={template.id} />
+                      )}
+                      {selectedCategory === "todo" && (
+                        <TodoTemplatePreview templateId={template.id} />
+                      )}
+                      {(selectedCategory === "text" ||
+                        selectedCategory === "heading" ||
+                        selectedCategory === "bullatedlist" ||
+                        selectedCategory === "numberlist") && (
+                        <GenericTemplatePreview type={selectedCategory} />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Template Info */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 border-t">
+                    <h3 className="font-semibold text-sm">{template.name}</h3>
+                    <p className="text-xs text-gray-600 mt-1">{template.desc}</p>
+                  </div>
+
+                  {/* Hover Overlay */}
+                  {selectedTemplate === template.id && (
+                    <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center">
+                      <div className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium">
+                        Create
                       </div>
                     </div>
-
-                    {/* Template Info */}
-                    <div className={`absolute bottom-0 left-0 right-0 backdrop-blur-sm p-4 border-t ${isDark ? "bg-[#1e1f23]/95 border-gray-700" : "bg-white/95 border-gray-200"}`}>
-                      <h3 className={`font-semibold text-sm ${isDark ? "text-gray-200" : "text-gray-900"}`}>{template.name}</h3>
-                      <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{template.desc}</p>
-                    </div>
-
-                    {/* Hover Overlay */}
-                    {selectedTemplate === template.id && (
-                      <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center">
-                        <div className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium">
-                          Create
-                        </div>
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
@@ -1616,33 +1222,33 @@ export default function ViewPickerCard({
 
 /* -------- TEMPLATE PREVIEW COMPONENTS -------- */
 
-function TableTemplatePreview({ templateId, isDark }: { templateId: number; isDark: boolean }) {
+function TableTemplatePreview({ templateId }: { templateId: number }) {
   if (templateId === 1) {
     return (
-      <div className={`w-full rounded-lg p-3 text-[10px] ${isDark ? "bg-[#1e1f23]" : "bg-white"}`}>
-        <div className={`grid grid-cols-3 gap-2 font-semibold ${isDark ? "text-gray-400" : "text-gray-700"}`}>
+      <div className="w-full bg-white rounded-lg p-3 text-[10px]">
+        <div className="grid grid-cols-3 gap-2 font-semibold text-gray-700">
           <div>Name</div>
           <div>Status</div>
           <div>Date</div>
         </div>
         <div className="mt-2 space-y-1">
-          <div className={`h-5 rounded ${isDark ? "bg-[#18191d]" : "bg-gray-100"}`} />
-          <div className={`h-5 rounded ${isDark ? "bg-[#18191d]" : "bg-gray-100"}`} />
+          <div className="h-5 bg-gray-100 rounded" />
+          <div className="h-5 bg-gray-100 rounded" />
         </div>
       </div>
     );
   }
   
   return (
-    <div className={`w-full rounded-lg p-3 text-[10px] ${isDark ? "bg-[#1e1f23]" : "bg-white"}`}>
-      <div className={`grid grid-cols-3 gap-2 font-semibold ${isDark ? "text-gray-400" : "text-gray-700"}`}>
+    <div className="w-full bg-white rounded-lg p-3 text-[10px]">
+      <div className="grid grid-cols-3 gap-2 font-semibold text-gray-700">
         <div>Task</div>
         <div>Status</div>
         <div>Due</div>
       </div>
       <div className="mt-2 space-y-1">
         {[1, 2, 3].map((i) => (
-          <div key={i} className={`grid grid-cols-3 gap-2 ${isDark ? "text-gray-400" : "text-gray-700"}`}>
+          <div key={i} className="grid grid-cols-3 gap-2">
             <div>Task {i}</div>
             <div className="text-green-600">●</div>
             <div>Feb {10 + i}</div>
@@ -1653,15 +1259,15 @@ function TableTemplatePreview({ templateId, isDark }: { templateId: number; isDa
   );
 }
 
-function BoardTemplatePreview({ templateId, isDark }: { templateId: number; isDark: boolean }) {
+function BoardTemplatePreview({ templateId }: { templateId: number }) {
   return (
     <div className="w-full grid grid-cols-3 gap-2 text-[9px]">
       {["Todo", "Doing", "Done"].map((col) => (
-        <div key={col} className={`rounded-md p-2 ${isDark ? "bg-[#1e1f23]" : "bg-white"}`}>
-          <div className={`font-semibold ${isDark ? "text-gray-400" : "text-gray-700"}`}>{col}</div>
+        <div key={col} className="rounded-md bg-white p-2">
+          <div className="font-semibold text-gray-700">{col}</div>
           <div className="mt-2 space-y-1">
             {templateId === 1 ? (
-              <div className={`h-6 rounded ${isDark ? "bg-[#18191d]" : "bg-gray-100"}`} />
+              <div className="h-6 bg-gray-100 rounded" />
             ) : (
               <>
                 <div className="h-6 bg-blue-100 rounded flex items-center px-1 text-[8px]">
@@ -1679,10 +1285,10 @@ function BoardTemplatePreview({ templateId, isDark }: { templateId: number; isDa
   );
 }
 
-function TimelineTemplatePreview({ templateId, isDark }: { templateId: number; isDark: boolean }) {
+function TimelineTemplatePreview({ templateId }: { templateId: number }) {
   return (
-    <div className={`w-full rounded-lg p-3 ${isDark ? "bg-[#1e1f23]" : "bg-white"}`}>
-      <div className={`text-[9px] mb-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+    <div className="w-full bg-white rounded-lg p-3">
+      <div className="text-[9px] text-gray-500 mb-2">
         {templateId === 1 ? "Empty timeline" : "Feb 2026"}
       </div>
       <div className="relative h-16">
@@ -1702,13 +1308,13 @@ function TimelineTemplatePreview({ templateId, isDark }: { templateId: number; i
   );
 }
 
-function GalleryTemplatePreview({ templateId, isDark }: { templateId: number; isDark: boolean }) {
+function GalleryTemplatePreview({ templateId }: { templateId: number }) {
   return (
     <div className="w-full grid grid-cols-3 gap-2">
       {[1, 2, 3].map((i) => (
-        <div key={i} className={`rounded-md overflow-hidden ${isDark ? "bg-[#1e1f23]" : "bg-white"}`}>
-          <div className={`h-12 ${templateId === 1 ? (isDark ? "bg-[#18191d]" : "bg-gray-100") : "bg-gradient-to-br from-blue-100 to-purple-100"}`} />
-          <div className={`p-1 text-[8px] font-semibold ${isDark ? "text-gray-400" : "text-gray-700"}`}>
+        <div key={i} className="rounded-md bg-white overflow-hidden">
+          <div className={`h-12 ${templateId === 1 ? "bg-gray-100" : "bg-linear-to-br from-blue-100 to-purple-100"}`} />
+          <div className="p-1 text-[8px] font-semibold">
             {templateId === 1 ? "" : `Item ${i}`}
           </div>
         </div>
@@ -1717,14 +1323,14 @@ function GalleryTemplatePreview({ templateId, isDark }: { templateId: number; is
   );
 }
 
-function TodoTemplatePreview({ templateId, isDark }: { templateId: number; isDark: boolean }) {
+function TodoTemplatePreview({ templateId }: { templateId: number }) {
   return (
-    <div className={`w-full rounded-lg p-3 ${isDark ? "bg-[#1e1f23]" : "bg-white"}`}>
+    <div className="w-full bg-white rounded-lg p-3">
       <div className="space-y-2">
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex items-center gap-2 text-[10px]">
-            <div className={`w-3 h-3 rounded border-2 ${isDark ? "border-gray-600" : "border-gray-300"}`} />
-            <div className={isDark ? "text-gray-400" : "text-gray-700"}>
+            <div className="w-3 h-3 rounded border-2 border-gray-300" />
+            <div className="text-gray-700">
               {templateId === 1 ? `Task ${i}` : `Daily task ${i}`}
             </div>
           </div>
