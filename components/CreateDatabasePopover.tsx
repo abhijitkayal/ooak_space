@@ -32,6 +32,7 @@ export default function CreateDatabasePopover({
       {open && (
         <ViewPickerCard
           projectId={projectId}
+          isDark={isDark}
           onDone={() => setOpen(false)}
         />
       )}

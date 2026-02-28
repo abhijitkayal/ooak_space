@@ -1002,15 +1002,18 @@ const TEMPLATES = {
 export default function ViewPickerCard({
   projectId,
   onDone,
+  isDark,
 }: {
   projectId: string;
   onDone: () => void;
+  isDark?: boolean;
 }) {
   const [selectedCategory, setSelectedCategory] = useState<ViewType>("table");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
 
   const { fetchDatabases } = useWorkspaceStore();
+  console.log("Selected Category:", isDark);
 
   const createDbFromTemplate = async (templateId: number) => {
     const template = (TEMPLATES[selectedCategory] || []).find(t => t.id === templateId);
@@ -1043,12 +1046,24 @@ export default function ViewPickerCard({
   const templates = TEMPLATES[selectedCategory] || [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4 sm:p-6">
-      <div className="w-full max-w-7xl h-[90vh] overflow-hidden rounded-2xl border bg-white shadow-2xl flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4 md:p-6">
+      <div className={`w-full max-w-7xl h-full sm:h-[90vh] overflow-hidden sm:rounded-2xl border shadow-2xl flex flex-col ${
+        isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'
+      }`}>
         {/* Header */}
-        <div className="border-b px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Create a design</h1>
-          <button onClick={onDone} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="Close">
+        <div className={`border-b px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between ${
+          isDark ? 'border-gray-800' : 'border-gray-200'
+        }`}>
+          <h1 className={`text-lg sm:text-2xl font-bold ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>Create a design</h1>
+          <button 
+            onClick={onDone} 
+            className={`p-2 rounded-lg transition-colors ${
+              isDark ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+            }`} 
+            aria-label="Close"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -1070,21 +1085,16 @@ export default function ViewPickerCard({
         {/* Main Content */}
         <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
-        <div className="w-64 border-r bg-gray-50 overflow-y-auto">
-          <div className="p-4">
-            <div className="mb-4">
-              <div className="flex items-center gap-2 px-3 py-2 text-sm font-semibold">
-                ✨ For you
-              </div>
-            </div>
-
-            {/* Left Sidebar */}
-<div className="w-64 border-r bg-gray-50 overflow-y-auto">
-  <div className="p-4 space-y-6">
+        <div className={`hidden md:block w-48 lg:w-64 border-r overflow-y-auto ${
+          isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+        }`}>
+  <div className="p-3 lg:p-4 space-y-4 lg:space-y-6">
 
     {/* ===== DATASET ===== */}
     <div>
-      <div className="text-xs font-semibold text-gray-500 uppercase mb-2 px-2">
+      <div className={`text-xs font-semibold uppercase mb-2 px-2 ${
+        isDark ? 'text-gray-400' : 'text-gray-500'
+      }`}>
         Dataset(suggested)
       </div>
 
@@ -1095,16 +1105,24 @@ export default function ViewPickerCard({
           <button
             key={option.type}
             onClick={() => setSelectedCategory(option.type)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition ${
+            className={`w-full flex items-center gap-2 lg:gap-3 px-2 lg:px-3 py-2 lg:py-2.5 rounded-lg text-left transition ${
               selectedCategory === option.type
-                ? "bg-white shadow-sm font-medium"
-                : "hover:bg-gray-100"
+                ? isDark 
+                  ? "bg-gray-700 shadow-sm font-medium" 
+                  : "bg-white shadow-sm font-medium"
+                : isDark
+                  ? "hover:bg-gray-700"
+                  : "hover:bg-gray-100"
             }`}
           >
-            <span className="text-xl">{option.icon}</span>
-            <div className="flex-1">
-              <div className="text-sm font-medium">{option.title}</div>
-              <div className="text-xs text-gray-500">{option.desc}</div>
+            <span className="text-lg lg:text-xl">{option.icon}</span>
+            <div className="flex-1 min-w-0">
+              <div className={`text-xs lg:text-sm font-medium truncate ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>{option.title}</div>
+              <div className={`text-[10px] lg:text-xs truncate ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`}>{option.desc}</div>
             </div>
           </button>
         ))}
@@ -1113,7 +1131,9 @@ export default function ViewPickerCard({
 
     {/* ===== BASIC NOTES ===== */}
     <div>
-      <div className="text-xs font-semibold text-gray-500 uppercase mb-2 px-2">
+      <div className={`text-xs font-semibold uppercase mb-2 px-2 ${
+        isDark ? 'text-gray-400' : 'text-gray-500'
+      }`}>
         Basic Notes
       </div>
 
@@ -1124,16 +1144,24 @@ export default function ViewPickerCard({
           <button
             key={option.type}
             onClick={() => setSelectedCategory(option.type)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition ${
+            className={`w-full flex items-center gap-2 lg:gap-3 px-2 lg:px-3 py-2 lg:py-2.5 rounded-lg text-left transition ${
               selectedCategory === option.type
-                ? "bg-white shadow-sm font-medium"
-                : "hover:bg-gray-100"
+                ? isDark 
+                  ? "bg-gray-700 shadow-sm font-medium" 
+                  : "bg-white shadow-sm font-medium"
+                : isDark
+                  ? "hover:bg-gray-700"
+                  : "hover:bg-gray-100"
             }`}
           >
-            <span className="text-xl">{option.icon}</span>
-            <div className="flex-1">
-              <div className="text-sm font-medium">{option.title}</div>
-              <div className="text-xs text-gray-500">{option.desc}</div>
+            <span className="text-lg lg:text-xl">{option.icon}</span>
+            <div className="flex-1 min-w-0">
+              <div className={`text-xs lg:text-sm font-medium truncate ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>{option.title}</div>
+              <div className={`text-[10px] lg:text-xs truncate ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`}>{option.desc}</div>
             </div>
           </button>
         ))}
@@ -1141,35 +1169,47 @@ export default function ViewPickerCard({
     </div>
 
   </div>
-</div>
-          </div>
         </div>
 
         {/* Right Content Area */}
-        <div className="flex-1 overflow-y-auto bg-white">
-          <div className="p-8">
+        <div className={`flex-1 overflow-y-auto ${
+          isDark ? 'bg-gray-900' : 'bg-white'
+        }`}>
+          <div className="p-4 sm:p-6 lg:p-8">
             {/* Section Title */}
-            <div className="mb-6">
-              <h2 className="text-xl font-bold mb-2">
+            <div className="mb-4 sm:mb-6">
+              <h2 className={`text-lg sm:text-xl font-bold mb-2 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
                 {OPTIONS.find((o) => o.type === selectedCategory)?.title} templates
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className={`text-xs sm:text-sm ${
+                isDark ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 {OPTIONS.find((o) => o.type === selectedCategory)?.desc}
               </p>
             </div>
 
             {/* Templates Grid */}
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {templates.map((template) => (
                 <button
                   key={template.id}
                   onClick={() => createDbFromTemplate(template.id)}
                   onMouseEnter={() => setSelectedTemplate(template.id)}
                   onMouseLeave={() => setSelectedTemplate(null)}
-                  className="group relative aspect-4/3 rounded-xl border-2 border-gray-200 overflow-hidden hover:border-blue-500 transition-all hover:shadow-lg"
+                  className={`group relative aspect-video sm:aspect-4/3 rounded-xl border-2 overflow-hidden transition-all hover:shadow-lg ${
+                    isDark 
+                      ? 'border-gray-700 hover:border-teal-500' 
+                      : 'border-gray-200 hover:border-blue-500'
+                  }`}
                 >
                   {/* Preview Area */}
-                  <div className="absolute inset-0 bg-linear-to-br from-gray-50 to-gray-100 p-4">
+                  <div className={`absolute inset-0 p-3 sm:p-4 ${
+                    isDark 
+                      ? 'bg-gradient-to-br from-gray-800 to-gray-900' 
+                      : 'bg-gradient-to-br from-gray-50 to-gray-100'
+                  }`}>
                     <div className="h-full flex items-center justify-center">
                       {selectedCategory === "table" && (
                         <TableTemplatePreview templateId={template.id} />
@@ -1196,15 +1236,27 @@ export default function ViewPickerCard({
                   </div>
 
                   {/* Template Info */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 border-t">
-                    <h3 className="font-semibold text-sm">{template.name}</h3>
-                    <p className="text-xs text-gray-600 mt-1">{template.desc}</p>
+                  <div className={`absolute bottom-0 left-0 right-0 backdrop-blur-sm p-3 sm:p-4 border-t ${
+                    isDark 
+                      ? 'bg-gray-800/95 border-gray-700' 
+                      : 'bg-white/95 border-gray-200'
+                  }`}>
+                    <h3 className={`font-semibold text-xs sm:text-sm ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}>{template.name}</h3>
+                    <p className={`text-[10px] sm:text-xs mt-1 ${
+                      isDark ? 'text-gray-400' : 'text-gray-600'
+                    }`}>{template.desc}</p>
                   </div>
 
                   {/* Hover Overlay */}
                   {selectedTemplate === template.id && (
-                    <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center">
-                      <div className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium">
+                    <div className={`absolute inset-0 flex items-center justify-center ${
+                      isDark ? 'bg-teal-500/10' : 'bg-blue-500/10'
+                    }`}>
+                      <div className={`px-4 py-2 rounded-lg font-medium text-white ${
+                        isDark ? 'bg-teal-500' : 'bg-blue-500'
+                      }`}>
                         Create
                       </div>
                     </div>

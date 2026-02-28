@@ -35,8 +35,8 @@ export default function Modal({ isOpen, onClose, title, children, isDark }: Moda
                                           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                                           className={`pointer-events-auto relative w-full max-w-lg rounded-[32px] overflow-hidden border shadow-2xl
                 ${isDark
-                                                      ? 'bg-[#15171c]/90 border-gray-800 text-white'
-                                                      : 'bg-white/90 border-rose-100 text-gray-900'}`}
+                                                      ? 'bg-gray-900/95 border-gray-800 text-white'
+                                                      : 'bg-white/95 border-rose-100 text-gray-900'}`}
                                           style={{ backdropFilter: 'blur(16px)' }}
                                     >
                                           {/* Header */}

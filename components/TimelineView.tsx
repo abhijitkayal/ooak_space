@@ -1855,7 +1855,6 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
 
   const [draggingCard, setDraggingCard] = useState<TimelineItem | null>(null);
   const [draggedCardDuration, setDraggedCardDuration] = useState(0);
-  const [cardDragOffset, setCardDragOffset] = useState({ x: 0, y: 0 });
   const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
 
@@ -1905,13 +1904,30 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
   };
 
   const ROW_HEIGHT = 56;
-  const DAY_COL_WIDTH = 70;
+  // Responsive column width: smaller on mobile
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  const DAY_COL_WIDTH = isMobile ? 50 : 70;
+  const SIDEBAR_WIDTH = isMobile ? 180 : 260;
   const GRID_WIDTH = totalDays * DAY_COL_WIDTH;
 
   const handleNewButtonMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDraggingNew(true);
     setDragPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleNewButtonTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setIsDraggingNew(true);
+    setDragPosition({ x: touch.clientX, y: touch.clientY });
   };
 
   const handleCardMouseDown = (e: React.MouseEvent, item: TimelineItem) => {
@@ -1928,13 +1944,21 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
     setDraggingCard(item);
     setDraggedCardDuration(duration);
     setDragPosition({ x: e.clientX, y: e.clientY });
+  };
 
-    const target = e.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    setCardDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
+  const handleCardTouchStart = (e: React.TouchEvent, item: TimelineItem) => {
+    const touch = e.touches[0];
+    
+    setMouseDownPos({ x: touch.clientX, y: touch.clientY });
+    setHasMoved(false);
+
+    const s = new Date(item.startDate);
+    const endDate = new Date(item.endDate);
+    const duration = Math.max(1, daysBetween(s, endDate) + 1);
+
+    setDraggingCard(item);
+    setDraggedCardDuration(duration);
+    setDragPosition({ x: touch.clientX, y: touch.clientY });
   };
 
   useEffect(() => {
@@ -1954,6 +1978,32 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
         const rect = gridRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
+
+        const dayIndex = Math.max(0, Math.floor(x / DAY_COL_WIDTH));
+        const rowIndex = Math.max(0, Math.floor(y / ROW_HEIGHT));
+
+        const leftPx = dayIndex * DAY_COL_WIDTH;
+        const topPx = rowIndex * ROW_HEIGHT + 10;
+
+        setGhostPosition({ left: leftPx, top: topPx });
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      const dx = Math.abs(touch.clientX - mouseDownPos.x);
+      const dy = Math.abs(touch.clientY - mouseDownPos.y);
+      
+      if (dx > 5 || dy > 5) {
+        setHasMoved(true);
+      }
+
+      setDragPosition({ x: touch.clientX, y: touch.clientY });
+
+      if (gridRef.current) {
+        const rect = gridRef.current.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
 
         const dayIndex = Math.max(0, Math.floor(x / DAY_COL_WIDTH));
         const rowIndex = Math.max(0, Math.floor(y / ROW_HEIGHT));
@@ -2018,13 +2068,72 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
       setHasMoved(false);
     };
 
+    const handleTouchEnd = async (e: TouchEvent) => {
+      if (gridRef.current && hasMoved && e.changedTouches[0]) {
+        const touch = e.changedTouches[0];
+        const rect = gridRef.current.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+
+        if (x >= 0 && x <= GRID_WIDTH) {
+          const dayIndex = Math.max(0, Math.floor(x / DAY_COL_WIDTH));
+          const start = addDays(rangeStart, dayIndex);
+
+          if (isDraggingNew) {
+            const end = addDays(start, 3);
+
+            const res = await fetch("/api/timeline", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                databaseId,
+                title: "New",
+                startDate: start.toISOString(),
+                endDate: end.toISOString(),
+                status: "Todo",
+                assignedTo: "",
+                comment: "",
+              }),
+            });
+
+            const created = await res.json();
+            await fetchItems();
+            setSelectedItem(created);
+            setModalOpen(true);
+          } else if (draggingCard) {
+            const end = addDays(start, draggedCardDuration - 1);
+
+            await fetch("/api/timeline", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                _id: draggingCard._id,
+                startDate: start.toISOString(),
+                endDate: end.toISOString(),
+              }),
+            });
+
+            await fetchItems();
+          }
+        }
+      }
+
+      setIsDraggingNew(false);
+      setDraggingCard(null);
+      setHasMoved(false);
+    };
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDraggingNew, draggingCard, draggedCardDuration, databaseId, rangeStart, GRID_WIDTH, DAY_COL_WIDTH, ROW_HEIGHT, hasMoved, mouseDownPos]);
 
   const createByClick = async (e: React.MouseEvent) => {
@@ -2097,41 +2206,41 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
     <>
       <div className={`rounded-2xl border overflow-hidden ${isDark ? "bg-[#18191d] border-gray-800" : "bg-white border-gray-200"}`}>
         {/* header */}
-        <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-          <div className="flex items-center gap-3">
-            <button className={isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-800"}>»</button>
-            <div className={`font-semibold ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+        <div className={`flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 lg:gap-0 px-3 sm:px-4 py-3 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
+          <div className="flex items-center gap-2 sm:gap-3 w-full lg:w-auto">
+            <button className={`p-2 lg:p-0 ${isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-800"}`}>»</button>
+            <div className={`font-semibold text-base sm:text-lg ${isDark ? "text-gray-100" : "text-gray-900"}`}>
               {formatMonthYear(monthStart)}
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full lg:w-auto text-xs sm:text-sm">
             <button
               onClick={() => router.push(`/schedule?databaseId=${databaseId}`)}
-              className={`px-3 py-1.5 rounded-lg border font-semibold ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+              className={`px-3 py-2 rounded-lg border font-semibold whitespace-nowrap touch-manipulation ${isDark ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
             >
               Manage in Calendar
             </button>
 
-            <div className={`flex items-center gap-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            <div className={`hidden sm:flex items-center gap-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
               <span>Month</span>
               <span>▾</span>
             </div>
 
-            <div className={`flex items-center gap-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-              <button onClick={goToPrevMonth} className={`px-2 py-1 ${isDark ? "hover:text-gray-200" : "hover:text-gray-800"}`}>‹</button>
-              <button onClick={goToToday} className={`px-3 py-1 rounded ${isDark ? "hover:text-gray-200 hover:bg-gray-800" : "hover:text-gray-800 hover:bg-gray-100"}`}>Today</button>
-              <button onClick={goToNextMonth} className={`px-2 py-1 ${isDark ? "hover:text-gray-200" : "hover:text-gray-800"}`}>›</button>
+            <div className={`flex items-center gap-1 sm:gap-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              <button onClick={goToPrevMonth} className={`px-3 py-2 touch-manipulation ${isDark ? "hover:text-gray-200" : "hover:text-gray-800"}`}>‹</button>
+              <button onClick={goToToday} className={`px-3 py-2 rounded whitespace-nowrap touch-manipulation ${isDark ? "hover:text-gray-200 hover:bg-gray-800" : "hover:text-gray-800 hover:bg-gray-100"}`}>Today</button>
+              <button onClick={goToNextMonth} className={`px-3 py-2 touch-manipulation ${isDark ? "hover:text-gray-200" : "hover:text-gray-800"}`}>›</button>
             </div>
           </div>
         </div>
 
         {/* grid */}
-        <div className="relative overflow-x-auto">
-          <div style={{ minWidth: GRID_WIDTH + 260 }}>
+        <div className="relative overflow-x-auto overflow-y-hidden">
+          <div style={{ minWidth: GRID_WIDTH + SIDEBAR_WIDTH }}>
             {/* Top Day Row */}
             <div className={`flex border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-              <div className={`w-[260px] shrink-0 ${isDark ? "bg-[#18191d]" : "bg-white"}`} />
+              <div className={`shrink-0 ${isDark ? "bg-[#18191d]" : "bg-white"}`} style={{ width: SIDEBAR_WIDTH }} />
 
               <div className="relative" style={{ width: GRID_WIDTH, height: 44 }}>
                 <div className="absolute inset-0 flex pointer-events-none">
@@ -2152,11 +2261,11 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                     return (
                       <div
                         key={i}
-                        className={`flex items-center justify-center text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        className={`flex items-center justify-center text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
                         style={{ width: DAY_COL_WIDTH }}
                       >
                         <div
-                          className={`w-9 h-9 flex items-center justify-center rounded-full ${
+                          className={`w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-xs sm:text-base ${
                             isToday
                               ? "bg-red-500 text-white font-bold"
                               : isDark
@@ -2183,16 +2292,17 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
             {/* Body */}
             <div className="relative flex">
               {/* left */}
-              <div className={`w-[260px] shrink-0 border-r ${isDark ? "bg-[#18191d] border-gray-800" : "bg-white border-gray-200"}`}>
+              <div className={`shrink-0 border-r ${isDark ? "bg-[#18191d] border-gray-800" : "bg-white border-gray-200"}`} style={{ width: SIDEBAR_WIDTH }}>
                 <div style={{ height: items.length * ROW_HEIGHT }} />
 
                 <button
                   onMouseDown={handleNewButtonMouseDown}
+                  onTouchStart={handleNewButtonTouchStart}
                   onClick={!isDraggingNew ? createFromNewButton : undefined}
-                  className={`flex items-center gap-2 px-4 py-4 cursor-grab active:cursor-grabbing ${isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-800"}`}
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-3 sm:py-4 w-full touch-manipulation cursor-grab active:cursor-grabbing ${isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-800"}`}
                 >
-                  <span className="text-xl">+</span>
-                  <span className="text-base">New</span>
+                  <span className="text-lg sm:text-xl">+</span>
+                  <span className="text-sm sm:text-base">New</span>
                 </button>
               </div>
 
@@ -2227,7 +2337,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                 {/* Ghost preview while dragging new button */}
                 {isDraggingNew && (
                   <div
-                    className={`absolute h-[44px] rounded-xl border-2 border-dashed flex items-center px-4 font-semibold pointer-events-none ${isDark ? "border-blue-500 bg-blue-500/20 text-blue-400" : "border-blue-400 bg-blue-50/50 text-blue-600"}`}
+                    className={`absolute h-10 sm:h-11 rounded-lg sm:rounded-xl border-2 border-dashed flex items-center px-3 sm:px-4 text-sm sm:text-base font-semibold pointer-events-none ${isDark ? "border-blue-500 bg-blue-500/20 text-blue-400" : "border-blue-400 bg-blue-50/50 text-blue-600"}`}
                     style={{
                       left: ghostPosition.left,
                       top: ghostPosition.top,
@@ -2245,11 +2355,11 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                 {/* Ghost preview while dragging existing card */}
                 {draggingCard && (
                   <div
-                    className={`absolute h-[44px] rounded-xl border-2 border-dashed flex items-center px-4 font-semibold pointer-events-none ${isDark ? "border-green-500 bg-green-500/20 text-green-400" : "border-green-400 bg-green-50/50 text-green-600"}`}
+                    className={`absolute h-10 sm:h-11 rounded-lg sm:rounded-xl border-2 border-dashed flex items-center px-3 sm:px-4 text-sm sm:text-base font-semibold pointer-events-none ${isDark ? "border-green-500 bg-green-500/20 text-green-400" : "border-green-400 bg-green-50/50 text-green-600"}`}
                     style={{
                       left: ghostPosition.left,
                       top: ghostPosition.top,
-                      width: Math.max(draggedCardDuration * DAY_COL_WIDTH, 180),
+                      width: Math.max(draggedCardDuration * DAY_COL_WIDTH, isMobile ? 140 : 180),
                       zIndex: 30,
                     }}
                   >
@@ -2269,7 +2379,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                     const duration = Math.max(1, daysBetween(s, e) + 1);
 
                     const leftPx = startOffset * DAY_COL_WIDTH;
-                    const widthPx = Math.max(duration * DAY_COL_WIDTH, 180);
+                    const widthPx = Math.max(duration * DAY_COL_WIDTH, isMobile ? 140 : 180);
 
                     const isBeingDragged = draggingCard?._id === it._id;
 
@@ -2278,6 +2388,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                         <div
                           data-timeline-card
                           onMouseDown={(e) => handleCardMouseDown(e, it)}
+                          onTouchStart={(e) => handleCardTouchStart(e, it)}
                           onClick={(ev) => {
                             ev.stopPropagation();
                             if (!hasMoved) {
@@ -2285,14 +2396,14 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
                               setModalOpen(true);
                             }
                           }}
-                          className={`absolute top-[10px] h-[44px] rounded-xl border shadow-sm flex items-center px-4 font-semibold cursor-pointer transition-opacity ${
+                          className={`absolute top-2.5 h-10 sm:h-11 rounded-lg sm:rounded-xl border shadow-md flex items-center px-3 sm:px-4 text-sm sm:text-base font-semibold cursor-pointer touch-manipulation transition-all hover:shadow-lg ${
                             isBeingDragged ? "opacity-30" : "opacity-100"
-                          } ${isDark ? "bg-[#1e1f23] border-gray-700 text-gray-200 hover:bg-[#252730]" : "bg-white border-gray-200 text-gray-800 hover:bg-gray-50"}`}
+                          } ${isDark ? "bg-gradient-to-r from-teal-500 to-rose-500 border-gray-700 text-white hover:shadow-teal-500/20" : "bg-gradient-to-r from-teal-500 to-rose-500 border-gray-300 text-white hover:shadow-rose-500/20"}`}
                           style={{ left: leftPx, width: widthPx }}
                         >
-                          {it.title}
-                          <div className="ml-auto flex items-center">
-                            <div className={`w-2 h-2 rounded-full ${isDark ? "bg-gray-600" : "bg-gray-300"}`} />
+                          <span className="truncate">{it.title}</span>
+                          <div className="ml-auto flex items-center shrink-0">
+                            <div className={`w-2 h-2 rounded-full ${isDark ? "bg-white/60" : "bg-white/80"}`} />
                           </div>
                         </div>
                       </div>
@@ -2310,7 +2421,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
       {/* Floating cursor preview while dragging +New */}
       {isDraggingNew && (
         <div
-          className={`fixed pointer-events-none z-50 border-2 rounded-xl shadow-lg px-4 py-2 font-semibold ${isDark ? "bg-[#1e1f23] border-blue-500 text-blue-400" : "bg-white border-blue-400 text-blue-600"}`}
+          className={`fixed pointer-events-none z-50 border-2 rounded-lg sm:rounded-xl shadow-lg px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold ${isDark ? "bg-[#1e1f23] border-blue-500 text-blue-400" : "bg-white border-blue-400 text-blue-600"}`}
           style={{ left: dragPosition.x + 10, top: dragPosition.y + 10 }}
         >
           + New Task
@@ -2320,7 +2431,7 @@ export default function TimelineView({ databaseId }: { databaseId: string }) {
       {/* Floating cursor preview while dragging existing card */}
       {draggingCard && (
         <div
-          className={`fixed pointer-events-none z-50 border-2 rounded-xl shadow-lg px-4 py-2 font-semibold ${isDark ? "bg-[#1e1f23] border-green-500 text-green-400" : "bg-white border-green-400 text-green-600"}`}
+          className={`fixed pointer-events-none z-50 border-2 rounded-lg sm:rounded-xl shadow-lg px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold ${isDark ? "bg-[#1e1f23] border-green-500 text-green-400" : "bg-white border-green-400 text-green-600"}`}
           style={{ left: dragPosition.x + 10, top: dragPosition.y + 10 }}
         >
           📅 {draggingCard.title}

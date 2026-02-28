@@ -1662,7 +1662,7 @@ export default function Sidebar({ view, setView }: SidebarProps) {
 
   const SidebarContent = () => (
     <>
-      <div className="flex-1 overflow-y-auto pb-16">
+      <div className={`flex-1 overflow-y-auto pb-16 ${isDark ? "bg-gray-900" : "bg-rose-50"}`}>
         {/* SEARCH */}
         <div className={`${open ? "p-6 pb-2" : "p-4 pb-2"}`}>
           {open && (
@@ -1722,7 +1722,7 @@ export default function Sidebar({ view, setView }: SidebarProps) {
                           projects.map((project, idx) => (
                             <div key={project._id} className="relative">
                               <div className={`absolute left-[8px] top-2 w-[28px] h-[14px] border-l-2 border-b-2 rounded-bl-lg ${isDark ? "border-gray-600" : "border-gray-400"}`} />
-                              <div className="ml-[32px]"><ProjectRow project={project} isDark={isDark} /></div>
+                              <div className="ml-[32px]"><ProjectRow project={project} isDark={isDark} pathname={pathname} /></div>
                             </div>
                           ))
                         )}

@@ -253,6 +253,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTheme } from "next-themes";
 
 import {
   DndContext,
@@ -292,11 +293,14 @@ type Item = {
 const BOARD_COLUMNS = ["In Progress", "Done", "Not Complete"] as const;
 
 export default function BoardView({ databaseId }: { databaseId: string }) {
+  const { resolvedTheme } = useTheme();
   const [properties, setProperties] = useState<Property[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [showCreateTask, setShowCreateTask] = useState(false);
+
+  const isDark = resolvedTheme === "dark";
 
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -428,14 +432,14 @@ export default function BoardView({ databaseId }: { databaseId: string }) {
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className={`overflow-hidden shadow-md ${!isDark ? 'bg-gray-100' : ''}`}>
       {/* Header */}
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Board</CardTitle>
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 px-4 sm:px-6 py-3 sm:py-4">
+        <CardTitle className="text-lg sm:text-xl">Board</CardTitle>
 
-        <Button size="sm" onClick={() => setShowCreateTask(true)}>
+        <Button size="sm" onClick={() => setShowCreateTask(true)} className="touch-manipulation w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
-          New
+          New Task
         </Button>
       </CardHeader>
 
@@ -444,23 +448,23 @@ export default function BoardView({ databaseId }: { databaseId: string }) {
       {/* Board */}
       <CardContent className="p-0">
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-          <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-4">
             {BOARD_COLUMNS.map((col) => (
-              <Card key={col} id={col} className="bg-muted/40">
-                <CardHeader className="py-4">
+              <Card key={col} id={col} className={`shadow-sm ${!isDark ? 'bg-rose-50' : 'bg-muted/40'}`}>
+                <CardHeader className="py-3 sm:py-4 px-3 sm:px-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold">{col}</div>
-                    <Badge variant="secondary">{grouped[col].length}</Badge>
+                    <div className="text-xs sm:text-sm font-semibold truncate">{col}</div>
+                    <Badge variant="secondary" className="text-xs">{grouped[col].length}</Badge>
                   </div>
                 </CardHeader>
 
-                <CardContent className="pt-0">
-                  <ScrollArea className="h-[420px] pr-2">
+                <CardContent className="pt-0 px-2 sm:px-4 pb-2 sm:pb-4">
+                  <ScrollArea className="h-[300px] sm:h-[420px] pr-2">
                     <SortableContext
                       items={grouped[col].map((x) => x._id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <div className="space-y-3">
+                      <div className="space-y-2 sm:space-y-3">
                         {grouped[col].map((it) => (
                           <TaskCard
                             key={it._id}

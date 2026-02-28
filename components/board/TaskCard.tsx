@@ -65,11 +65,11 @@ export default function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      className="cursor-grab active:cursor-grabbing"
+      className="cursor-grab active:cursor-grabbing touch-manipulation"
     >
-      <Card>
-        <CardContent className="p-3">
-          <div className="text-sm font-semibold line-clamp-2">
+      <Card className="shadow-sm hover:shadow-md transition-shadow bg-gradient-to-r from-teal-500 to-rose-500 dark:bg-inherit">
+        <CardContent className="p-2.5 sm:p-3">
+          <div className="text-xs sm:text-sm font-semibold line-clamp-2">
             {title || "Untitled"}
           </div>
         </CardContent>

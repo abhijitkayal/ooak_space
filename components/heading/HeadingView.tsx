@@ -310,7 +310,7 @@ export default function HeadingView({ databaseId }: { databaseId: string }) {
 
   return (
     <TooltipProvider>
-      <Card>
+      <Card className={`${!isDark ? "bg-gray-100" : ""} rounded-xl border overflow-hidden`}>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Headings</CardTitle>
 
@@ -333,7 +333,7 @@ export default function HeadingView({ databaseId }: { databaseId: string }) {
           <ScrollArea className="h-[320px]">
             <div className="p-4 space-y-4">
               {headings.map((h) => (
-                <div key={h._id} className="flex items-start gap-3">
+                <div key={h._id} className={`flex items-start gap-3 border rounded-md px-3 py-2 ${!isDark ? 'bg-rose-50' : ''}`}>
                   {/* Level Select */}
                   <Select
                     value={h.level}

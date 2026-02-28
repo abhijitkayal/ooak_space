@@ -56,9 +56,10 @@ export default function DatabaseTabs({ projectId, isViewOnly = false }: { projec
 
   if (dbs.length === 0) {
     return (
-      <Card className={isDark ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-white"}>
-        <CardContent className="p-10 text-center">
-          <p className={isDark ? "text-gray-400" : "text-gray-500"}>
+      <Card className={`shadow-sm ${isDark ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-white"}`}>
+        <CardContent className="p-6 sm:p-8 md:p-10 text-center">
+          <div className="text-4xl sm:text-5xl mb-3 opacity-40">📊</div>
+          <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
             {isViewOnly 
               ? "This project has no databases yet."
               : "No databases yet. Click New Database to get started."}
@@ -69,24 +70,24 @@ export default function DatabaseTabs({ projectId, isViewOnly = false }: { projec
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8">
       {dbs.map((db, index) => (
         <div key={db._id}>
-          <Card className={`${isDark ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-white"}`}>
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{db.icon}</span>
-                <h3 className={`text-xl font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+          <Card className={`shadow-md hover:shadow-lg transition-shadow ${isDark ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-white"}`}>
+            <CardHeader className="pb-3 sm:pb-4 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-xl sm:text-2xl shrink-0">{db.icon}</span>
+                <h3 className={`text-base sm:text-lg md:text-xl font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}>
                   {db.name}
                 </h3>
               </div>
             </CardHeader>
-            <CardContent className="pt-2">
+            <CardContent className="pt-2 px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
               <DatabaseViewRenderer db={db} isViewOnly={isViewOnly} />
             </CardContent>
           </Card>
           {index < dbs.length - 1 && (
-            <Separator className={`my-8 ${isDark ? "bg-gray-700" : "bg-gray-200"}`} />
+            <Separator className={`my-4 sm:my-6 md:my-8 ${isDark ? "bg-gray-700" : "bg-gray-200"}`} />
           )}
         </div>
       ))}

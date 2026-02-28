@@ -151,6 +151,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 import TodoTaskModal from "./TodoTaskModal";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -178,6 +179,7 @@ type Task = {
 };
 
 export default function TodoView({ databaseId }: { databaseId: string }) {
+  const { resolvedTheme } = useTheme();
   const [properties, setProperties] = useState<Property[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,6 +188,8 @@ export default function TodoView({ databaseId }: { databaseId: string }) {
   // modal
   const [open, setOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  const isDark = resolvedTheme === "dark";
 
   const fetchAll = useCallback(async () => {
     console.log("TodoView.fetchAll - Starting fetch for databaseId:", databaseId);
@@ -324,7 +328,7 @@ export default function TodoView({ databaseId }: { databaseId: string }) {
 
   return (
     <>
-      <Card>
+      <Card className={`${isDark ? "bg-black border-white" : "bg-gray-100"} rounded-xl border overflow-hidden`}>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>To-do</CardTitle>
 
@@ -353,7 +357,11 @@ export default function TodoView({ databaseId }: { databaseId: string }) {
                 return (
                   <div
                     key={task._id}
-                    className="flex items-center border gap-3 px-3 py-2 rounded-md hover:bg-gray-50"
+                    className={`flex items-center border gap-3 px-3 py-2 rounded-md ${
+                      isDark 
+                        ? "bg-black border-white hover:bg-gray-600" 
+                        : "bg-rose-50 hover:bg-rose-100"
+                    } hover:text-gray-800 dark:hover:text-gray-100`}
                   >
                     <Checkbox
                       checked={!!done}

@@ -145,6 +145,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -170,8 +171,11 @@ type TextBlock = {
 };
 
 export default function TextView({ databaseId }: { databaseId: string }) {
+  const { resolvedTheme } = useTheme();
   const [blocks, setBlocks] = useState<TextBlock[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const isDark = resolvedTheme === "dark";
 
   const fetchAll = async () => {
     setLoading(true);
@@ -242,7 +246,7 @@ export default function TextView({ databaseId }: { databaseId: string }) {
 
   return (
     <TooltipProvider>
-      <Card>
+      <Card className={`${!isDark ? "bg-gray-100" : ""} rounded-xl border overflow-hidden`}>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Text</CardTitle>
 
@@ -258,7 +262,7 @@ export default function TextView({ databaseId }: { databaseId: string }) {
           <ScrollArea className="h-[520px]">
             <div className="p-4 space-y-6">
               {blocks.map((b) => (
-                <Card key={b._id}>
+                <Card key={b._id} className={!isDark ? 'bg-rose-50' : ''}>
                   <CardContent className="space-y-3 p-4">
                     {/* Title */}
                     <Input

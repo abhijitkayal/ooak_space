@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
-import { generateWorkbook } from "@/lib/excel";
+import { generateWorkbook } from "@/lib/Excel";
 
 export async function POST(req: Request) {
   const body = await req.json();

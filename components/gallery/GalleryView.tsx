@@ -216,7 +216,8 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 
 import AddPropertyModal from "./AddPropertyModal";
 import GalleryItemModal from "./GalleryItemModal";
@@ -241,10 +242,11 @@ type Item = {
   _id: string;
   databaseId: string;
   title?: string;
-  values: Record<string, any>;
+  values: Record<string, unknown>;
 };
 
 export default function GalleryView({ databaseId }: { databaseId: string }) {
+  const { resolvedTheme } = useTheme();
   const [properties, setProperties] = useState<Property[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -253,9 +255,9 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [showItemModal, setShowItemModal] = useState(false);
 
-  const fetchAll = async () => {
-    setLoading(true);
+  const isDark = resolvedTheme === "dark";
 
+  const fetchAll = useCallback(async () => {
     const [pRes, iRes] = await Promise.all([
       fetch(`/api/properties?databaseId=${databaseId}`),
       fetch(`/api/items?databaseId=${databaseId}`),
@@ -263,15 +265,32 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
 
     setProperties(await pRes.json());
     setItems(await iRes.json());
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchAll();
   }, [databaseId]);
 
-  const titleProp = useMemo(() => properties[0], [properties]);
-  const cardProps = useMemo(() => properties.slice(1, 5), [properties]);
+  useEffect(() => {
+    let mounted = true;
+    
+    const loadData = async () => {
+      setLoading(true);
+      
+      const [pRes, iRes] = await Promise.all([
+        fetch(`/api/properties?databaseId=${databaseId}`),
+        fetch(`/api/items?databaseId=${databaseId}`),
+      ]);
+
+      if (mounted) {
+        setProperties(await pRes.json());
+        setItems(await iRes.json());
+        setLoading(false);
+      }
+    };
+
+    void loadData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [databaseId]);
 
   const createItem = async () => {
     const res = await fetch("/api/items", {
@@ -294,7 +313,7 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
     setSelectedItem(null);
   };
 
-  const renderValue = (prop: Property, value: any) => {
+  const renderValue = (prop: Property, value: unknown): string => {
     if (!value) return "";
 
     if (prop.type === "multi_select" && Array.isArray(value)) {
@@ -303,9 +322,12 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
 
     if (prop.type === "date") {
       try {
-        return new Date(value).toLocaleDateString();
+        if (typeof value === "string" || typeof value === "number" || value instanceof Date) {
+          return new Date(value).toLocaleDateString();
+        }
+        return String(value);
       } catch {
-        return value;
+        return String(value);
       }
     }
 
@@ -317,7 +339,7 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className={`overflow-hidden ${isDark ? "bg-black border-white" : "bg-gray-100 border-gray-200"}`}>
       {/* Header */}
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Gallery</CardTitle>
@@ -368,7 +390,11 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
               <Card
                 key={it._id}
                 onClick={() => handleCardClick(it)}
-                className="cursor-pointer hover:bg-muted/40 transition"
+                className={`cursor-pointer transition border ${
+                  isDark
+                    ? "bg-transparent border-white hover:bg-gray-800"
+                    : "bg-rose-50 border-gray-200 hover:bg-rose-100"
+                }`}
               >
                 <CardContent className="p-4 space-y-3">
                   {/* Title */}
@@ -383,7 +409,7 @@ export default function GalleryView({ databaseId }: { databaseId: string }) {
                       const text = renderValue(p, v);
 
                       return (
-                        <div key={p._id} className="flex items-start gap-2">
+                        <div key={p._id} className="flex items-start gap-2 ">
                           <Badge variant="secondary" className="shrink-0">
                             {p.name}
                           </Badge>

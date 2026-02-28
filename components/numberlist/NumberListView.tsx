@@ -190,6 +190,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -214,11 +215,14 @@ type NumberItem = {
 };
 
 export default function NumberListView({ databaseId }: { databaseId: string }) {
+  const { resolvedTheme } = useTheme();
   const [items, setItems] = useState<NumberItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   // store refs for focus (Notion style)
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const isDark = resolvedTheme === "dark";
 
   const fetchAll = async () => {
     setLoading(true);
@@ -313,7 +317,7 @@ export default function NumberListView({ databaseId }: { databaseId: string }) {
 
   return (
     <TooltipProvider>
-      <Card>
+      <Card className={`${!isDark ? "bg-gray-100" : ""} rounded-xl border overflow-hidden`}>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Numbered list</CardTitle>
 
@@ -329,7 +333,7 @@ export default function NumberListView({ databaseId }: { databaseId: string }) {
           <ScrollArea className="h-[320px]">
             <div className="p-4 space-y-2">
               {items.map((it, index) => (
-                <div key={it._id} className="flex items-center gap-3 border rounded-md px-2 py-2">
+                <div key={it._id} className={`flex items-center gap-3 border rounded-md px-2 py-2 ${!isDark ? 'bg-rose-50' : ''}`}>
                   {/* Number */}
                   <div className="w-8 text-right text-sm text-muted-foreground">
                     {index + 1}.
