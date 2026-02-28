@@ -14,9 +14,13 @@ export default function ExcelTable() {
   };
 
   // Update cell
-  const updateRow = (i: number, key: keyof Row, value: any) => {
+  const updateRow = (i: number, key: keyof Row, value: string | number) => {
     const updated = [...rows];
-    updated[i][key] = key === "product" ? value : Number(value);
+    if (key === "product") {
+      updated[i][key] = String(value);
+    } else {
+      updated[i][key] = Number(value);
+    }
     setRows(updated);
   };
 
