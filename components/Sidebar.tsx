@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
@@ -11,23 +13,24 @@ import {
 import ProjectRow from "./ProjectsRow";
 import { useWorkspaceStore } from "@/app/store/WorkspaceStore";
 
-// DND Kit imports
 import {
   DndContext,
-  closestCorners,
+  closestCenter,
   PointerSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   DragEndEvent,
-  UniqueIdentifier,
-} from '@dnd-kit/core';
+  DragStartEvent,
+  DragOverlay,
+} from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { restrictToVerticalAxis, restrictToWindowEdges } from "@dnd-kit/modifiers";
 
 export const EMOJI_LIST = [
   "😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇",
@@ -78,16 +81,12 @@ export default function Sidebar({ view, setView }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-   const [mounted, setMounted] = useState(() => {
-     if (typeof window !== 'undefined') {
-       return true;
-     }
-     return false;
-   });
-   const [open, setOpen] = useState(true);
-   const [mobileOpen, setMobileOpen] = useState(false);
-   const [pages, setPages] = useState<SidebarPage[]>([]);
-   const [projects, setProjects] = useState<Project[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [open, setOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [pages, setPages] = useState<SidebarPage[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [pageForm, setPageForm] = useState<{ pageName: string; menuKey: MenuKey | ""; emoji: string }>({
@@ -96,16 +95,18 @@ export default function Sidebar({ view, setView }: SidebarProps) {
   const [lastSavedName, setLastSavedName] = useState("");
   const [currentPageId, setCurrentPageId] = useState<string | null>(null);
 
-   const [createProjectModalOpen, setCreateProjectModalOpen] = useState(false);
-   const [projectForm, setProjectForm] = useState({ name: "", emoji: "📁" });
-   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const [createProjectModalOpen, setCreateProjectModalOpen] = useState(false);
+  const [projectForm, setProjectForm] = useState({ name: "", emoji: "📁" });
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
-   // DND state
-   const [draggedItem, setDraggedItem] = useState<{ type: 'project' | 'page'; id: string } | null>(null);
-
-  // ✅ WorkspaceStore — used to sync active database across app
   const { setActiveDatabase, setActiveProject } = useWorkspaceStore();
+
+  // ── DnD sensors ──
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -204,6 +205,40 @@ export default function Sidebar({ view, setView }: SidebarProps) {
     } catch (err) { console.error(err); }
   };
 
+  // ── Drag end handler ──
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveProjectId(event.active.id as string);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveProjectId(null);
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setProjects((prev) => {
+      const oldIndex = prev.findIndex((p) => p._id === active.id);
+      const newIndex = prev.findIndex((p) => p._id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+
+    // Persist new order to API
+    try {
+      const reordered = arrayMove(
+        projects,
+        projects.findIndex((p) => p._id === active.id),
+        projects.findIndex((p) => p._id === over.id)
+      );
+      await fetch("/api/projects/reorder", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: reordered.map((p) => p._id) }),
+      });
+    } catch (err) {
+      console.error("Failed to persist project order:", err);
+    }
+  };
+
   if (!mounted) return null;
 
   const hoverClass = isDark ? "hover:bg-white/5" : "hover:bg-rose-200/50";
@@ -218,6 +253,9 @@ export default function Sidebar({ view, setView }: SidebarProps) {
     { key: "template",      label: "Template",      path: "/template",      icon: <Layout     size={open ? 20 : 22} /> },
     { key: "market-places", label: "Market Places", path: "/market-places", icon: <Store      size={open ? 20 : 22} /> },
   ];
+
+  // The dragged project for overlay
+  const draggedProject = projects.find((p) => p._id === activeProjectId);
 
   const SidebarContent = () => (
     <>
@@ -306,23 +344,49 @@ export default function Sidebar({ view, setView }: SidebarProps) {
                             No projects yet. Create one.
                           </p>
                         ) : (
-                          projects.map((project) => (
-                            <div key={project._id} className="relative">
-                              <div className={`absolute left-[8px] top-2 w-[28px] h-[14px] border-l-2 border-b-2 rounded-bl-lg ${isDark ? "border-gray-600" : "border-gray-400"}`} />
-                              <div className="ml-[32px]">
-                                {/* ✅ Pass setActiveDatabase and setActiveProject to ProjectRow */}
-                                <ProjectRow
-                                  project={project}
-                                  isDark={isDark}
-                                  pathname={pathname}
-                                  onSelectDatabase={(db: any) => {
-                                    setActiveProject(project._id);
-                                    setActiveDatabase(db);
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          ))
+                          // ── DnD Context wraps only the project list ──
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
+                            onDragStart={handleDragStart}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <SortableContext
+                              items={projects.map((p) => p._id)}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              {projects.map((project) => (
+                                <div key={project._id} className="relative">
+                                  <div className={`absolute left-[8px] top-2 w-[28px] h-[14px] border-l-2 border-b-2 rounded-bl-lg ${isDark ? "border-gray-600" : "border-gray-400"}`} />
+                                  <div className="ml-[32px]">
+                                    <ProjectRow
+                                      project={project}
+                                      isDark={isDark}
+                                      pathname={pathname}
+                                      sortableId={project._id}
+                                      onSelectDatabase={(db: any) => {
+                                        setActiveProject(project._id);
+                                        setActiveDatabase(db);
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </SortableContext>
+
+                            {/* Drag overlay — ghost of dragged item */}
+                            <DragOverlay>
+                              {draggedProject ? (
+                                <div className={`flex items-center gap-2 px-3 py-2 rounded-xl shadow-2xl opacity-90 ${
+                                  isDark ? "bg-gray-700 text-gray-200" : "bg-white text-gray-800"
+                                }`}>
+                                  <span className="text-lg">{draggedProject.emoji}</span>
+                                  <span className="text-sm font-semibold truncate">{draggedProject.name}</span>
+                                </div>
+                              ) : null}
+                            </DragOverlay>
+                          </DndContext>
                         )}
                       </div>
                     ) : (

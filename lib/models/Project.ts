@@ -12,6 +12,8 @@ const ProjectSchema = new Schema(
         expiresAt: { type: Date, default: null }, // null = never expires
       }
     ],
+    // Add this field to your existing ProjectSchema:
+sortOrder: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
