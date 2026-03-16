@@ -1,430 +1,371 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
-type TemplateName = "blank" | "flowchart" | "mindmap" | "retrospective" | "kanban" | "wireframe";
+type Tool = "pen" | "select" | "eraser" | "rectangle" | "circle" | "triangle" | "line" | "text" | "sticky" | "highlighter";
 
-interface Template {
-  name: TemplateName;
-  label: string;
-  icon: string;
-  apply: (canvas: any, fabric: any, color: string) => void;
-}
-
-const TEMPLATES: Template[] = [
-  {
-    name: "blank",
-    label: "Blank",
-    icon: "⬜",
-    apply: () => {},
-  },
-  {
-    name: "flowchart",
-    label: "Flowchart",
-    icon: "🔷",
-    apply: (canvas, fabric, color) => {
-      const objects: any[] = [];
-
-      // Start oval
-      objects.push(new fabric.Ellipse({
-        left: 320, top: 40, rx: 70, ry: 28,
-        fill: "#1e3a5f", stroke: "#60a5fa", strokeWidth: 2, selectable: true,
-      }));
-      objects.push(new fabric.Text("Start", {
-        left: 365, top: 56, fontSize: 14, fill: "#fff",
-        fontFamily: "sans-serif", originX: "center",
-      }));
-
-      // Arrow down
-      objects.push(new fabric.Line([390, 96, 390, 136], { stroke: "#60a5fa", strokeWidth: 2, selectable: false }));
-      objects.push(new fabric.Triangle({ left: 383, top: 136, width: 14, height: 10, fill: "#60a5fa", angle: 180 }));
-
-      // Process box 1
-      objects.push(new fabric.Rect({
-        left: 310, top: 146, width: 160, height: 50,
-        fill: "#1e3a5f", stroke: "#60a5fa", strokeWidth: 2, rx: 4,
-      }));
-      objects.push(new fabric.Text("Process 1", {
-        left: 390, top: 164, fontSize: 13, fill: "#fff",
-        fontFamily: "sans-serif", originX: "center",
-      }));
-
-      // Arrow down
-      objects.push(new fabric.Line([390, 196, 390, 236], { stroke: "#60a5fa", strokeWidth: 2, selectable: false }));
-      objects.push(new fabric.Triangle({ left: 383, top: 236, width: 14, height: 10, fill: "#60a5fa", angle: 180 }));
-
-      // Decision diamond
-      const diamond = new fabric.Polygon([
-        { x: 80, y: 0 }, { x: 160, y: 40 },
-        { x: 80, y: 80 }, { x: 0, y: 40 },
-      ], {
-        left: 310, top: 246, fill: "#1e1b4b", stroke: "#a78bfa", strokeWidth: 2,
-      });
-      objects.push(diamond);
-      objects.push(new fabric.Text("Decision?", {
-        left: 390, top: 278, fontSize: 12, fill: "#fff",
-        fontFamily: "sans-serif", originX: "center",
-      }));
-
-      // Yes arrow
-      objects.push(new fabric.Line([390, 326, 390, 366], { stroke: "#4ade80", strokeWidth: 2 }));
-      objects.push(new fabric.Text("Yes", { left: 396, top: 340, fontSize: 11, fill: "#4ade80", fontFamily: "sans-serif" }));
-      objects.push(new fabric.Triangle({ left: 383, top: 366, width: 14, height: 10, fill: "#4ade80", angle: 180 }));
-
-      // No arrow
-      objects.push(new fabric.Line([470, 286, 560, 286], { stroke: "#f87171", strokeWidth: 2 }));
-      objects.push(new fabric.Text("No", { left: 500, top: 270, fontSize: 11, fill: "#f87171", fontFamily: "sans-serif" }));
-
-      // Process box 2
-      objects.push(new fabric.Rect({
-        left: 310, top: 376, width: 160, height: 50,
-        fill: "#1e3a5f", stroke: "#60a5fa", strokeWidth: 2, rx: 4,
-      }));
-      objects.push(new fabric.Text("Process 2", {
-        left: 390, top: 394, fontSize: 13, fill: "#fff",
-        fontFamily: "sans-serif", originX: "center",
-      }));
-
-      // Arrow down
-      objects.push(new fabric.Line([390, 426, 390, 466], { stroke: "#60a5fa", strokeWidth: 2 }));
-      objects.push(new fabric.Triangle({ left: 383, top: 466, width: 14, height: 10, fill: "#60a5fa", angle: 180 }));
-
-      // End oval
-      objects.push(new fabric.Ellipse({
-        left: 320, top: 476, rx: 70, ry: 28,
-        fill: "#1e3a5f", stroke: "#f87171", strokeWidth: 2,
-      }));
-      objects.push(new fabric.Text("End", {
-        left: 365, top: 492, fontSize: 14, fill: "#fff",
-        fontFamily: "sans-serif", originX: "center",
-      }));
-
-      objects.forEach((o) => canvas.add(o));
-      canvas.renderAll();
-    },
-  },
-  {
-    name: "mindmap",
-    label: "Mind Map",
-    icon: "🧠",
-    apply: (canvas, fabric, color) => {
-      const cx = 420, cy = 280;
-
-      // Center node
-      canvas.add(new fabric.Ellipse({
-        left: cx - 80, top: cy - 30, rx: 80, ry: 30,
-        fill: "#4f46e5", stroke: "#818cf8", strokeWidth: 2,
-      }));
-      canvas.add(new fabric.Text("Main Idea", {
-        left: cx, top: cy - 8, fontSize: 15, fill: "#fff",
-        fontFamily: "sans-serif", originX: "center", fontWeight: "bold",
-      }));
-
-      const branches = [
-        { label: "Topic A", dx: -220, dy: -140, color: "#f87171" },
-        { label: "Topic B", dx: 220, dy: -140, color: "#4ade80" },
-        { label: "Topic C", dx: -220, dy: 140, color: "#fb923c" },
-        { label: "Topic D", dx: 220, dy: 140, color: "#60a5fa" },
-      ];
-
-      branches.forEach(({ label, dx, dy, color: c }) => {
-        const bx = cx + dx, by = cy + dy;
-        canvas.add(new fabric.Line([cx, cy, bx, by], { stroke: c, strokeWidth: 2, selectable: false }));
-        canvas.add(new fabric.Rect({
-          left: bx - 60, top: by - 22, width: 120, height: 44,
-          fill: "#1e1b4b", stroke: c, strokeWidth: 2, rx: 8,
-        }));
-        canvas.add(new fabric.Text(label, {
-          left: bx, top: by - 8, fontSize: 13, fill: "#fff",
-          fontFamily: "sans-serif", originX: "center",
-        }));
-
-        // Sub branches
-        const subs = ["Sub 1", "Sub 2"];
-        subs.forEach((sub, i) => {
-          const sx = bx + (dx > 0 ? 160 : -160);
-          const sy = by + (i === 0 ? -50 : 50);
-          canvas.add(new fabric.Line([bx, by, sx, sy], { stroke: c, strokeWidth: 1.5, strokeDashArray: [4, 4], selectable: false }));
-          canvas.add(new fabric.Rect({
-            left: sx - 45, top: sy - 16, width: 90, height: 32,
-            fill: "#0f0f1a", stroke: c, strokeWidth: 1.5, rx: 6, opacity: 0.9,
-          }));
-          canvas.add(new fabric.Text(sub, {
-            left: sx, top: sy - 6, fontSize: 11, fill: "#cbd5e1",
-            fontFamily: "sans-serif", originX: "center",
-          }));
-        });
-      });
-
-      canvas.renderAll();
-    },
-  },
-  {
-    name: "retrospective",
-    label: "Retro",
-    icon: "🔁",
-    apply: (canvas, fabric, color) => {
-      const cols = [
-        { title: "✅ Went Well", x: 20, c: "#166534", b: "#4ade80" },
-        { title: "⚠️ To Improve", x: 280, c: "#7c2d12", b: "#fb923c" },
-        { title: "💡 Action Items", x: 540, c: "#1e3a5f", b: "#60a5fa" },
-        { title: "😊 Shoutouts", x: 800, c: "#4a1d96", b: "#c084fc" },
-      ];
-
-      cols.forEach(({ title, x, c, b }) => {
-        // Column bg
-        canvas.add(new fabric.Rect({
-          left: x, top: 20, width: 240, height: 500,
-          fill: c, stroke: b, strokeWidth: 1.5, rx: 10, opacity: 0.4,
-        }));
-        // Header
-        canvas.add(new fabric.Rect({
-          left: x, top: 20, width: 240, height: 44,
-          fill: c, stroke: b, strokeWidth: 1.5, rx: 10,
-        }));
-        canvas.add(new fabric.Text(title, {
-          left: x + 120, top: 34, fontSize: 13, fill: "#fff",
-          fontFamily: "sans-serif", originX: "center", fontWeight: "bold",
-        }));
-
-        // Sticky note placeholders
-        [80, 160, 240, 320, 400].forEach((y) => {
-          canvas.add(new fabric.Rect({
-            left: x + 10, top: y + 30, width: 220, height: 60,
-            fill: "#0f172a", stroke: b, strokeWidth: 1, rx: 6, opacity: 0.6,
-          }));
-          canvas.add(new fabric.Text("Click to add note...", {
-            left: x + 120, top: y + 52, fontSize: 10, fill: "#64748b",
-            fontFamily: "sans-serif", originX: "center",
-          }));
-        });
-      });
-
-      canvas.renderAll();
-    },
-  },
-  {
-    name: "kanban",
-    label: "Kanban",
-    icon: "📋",
-    apply: (canvas, fabric, color) => {
-      const cols = [
-        { title: "📥 Backlog", x: 20, c: "#1e293b", b: "#475569", cards: ["Task 1", "Task 2", "Task 3"] },
-        { title: "🔄 In Progress", x: 290, c: "#1e3a5f", b: "#60a5fa", cards: ["Task 4", "Task 5"] },
-        { title: "👀 Review", x: 560, c: "#2d1b4b", b: "#a78bfa", cards: ["Task 6"] },
-        { title: "✅ Done", x: 830, c: "#14532d", b: "#4ade80", cards: ["Task 7", "Task 8"] },
-      ];
-
-      cols.forEach(({ title, x, c, b, cards }) => {
-        canvas.add(new fabric.Rect({
-          left: x, top: 20, width: 250, height: 520,
-          fill: c, stroke: b, strokeWidth: 1.5, rx: 10, opacity: 0.5,
-        }));
-        canvas.add(new fabric.Rect({
-          left: x, top: 20, width: 250, height: 44,
-          fill: c, stroke: b, strokeWidth: 1.5, rx: 10,
-        }));
-        canvas.add(new fabric.Text(title, {
-          left: x + 125, top: 34, fontSize: 13, fill: "#fff",
-          fontFamily: "sans-serif", originX: "center", fontWeight: "bold",
-        }));
-
-        cards.forEach((card, i) => {
-          const cy = 80 + i * 90;
-          canvas.add(new fabric.Rect({
-            left: x + 10, top: cy, width: 230, height: 70,
-            fill: "#0f172a", stroke: b, strokeWidth: 1.5, rx: 8,
-          }));
-          canvas.add(new fabric.Text(card, {
-            left: x + 125, top: cy + 12, fontSize: 13, fill: "#fff",
-            fontFamily: "sans-serif", originX: "center", fontWeight: "bold",
-          }));
-          canvas.add(new fabric.Text("Click to edit description...", {
-            left: x + 125, top: cy + 34, fontSize: 10, fill: "#64748b",
-            fontFamily: "sans-serif", originX: "center",
-          }));
-          canvas.add(new fabric.Rect({
-            left: x + 16, top: cy + 50, width: 40, height: 12,
-            fill: b, rx: 4, opacity: 0.5,
-          }));
-        });
-
-        // Add card button
-        canvas.add(new fabric.Rect({
-          left: x + 10, top: 80 + cards.length * 90, width: 230, height: 36,
-          fill: "transparent", stroke: b, strokeWidth: 1, rx: 8,
-          strokeDashArray: [6, 4], opacity: 0.5,
-        }));
-        canvas.add(new fabric.Text("+ Add card", {
-          left: x + 125, top: 80 + cards.length * 90 + 10,
-          fontSize: 11, fill: "#64748b", fontFamily: "sans-serif", originX: "center",
-        }));
-      });
-
-      canvas.renderAll();
-    },
-  },
-  {
-    name: "wireframe",
-    label: "Wireframe",
-    icon: "🖥️",
-    apply: (canvas, fabric, color) => {
-      // Browser chrome
-      canvas.add(new fabric.Rect({ left: 40, top: 30, width: 800, height: 500, fill: "#0f172a", stroke: "#334155", strokeWidth: 2, rx: 8 }));
-      canvas.add(new fabric.Rect({ left: 40, top: 30, width: 800, height: 40, fill: "#1e293b", stroke: "#334155", strokeWidth: 1, rx: 8 }));
-
-      // Nav dots
-      ["#f87171", "#fb923c", "#4ade80"].forEach((c, i) => {
-        canvas.add(new fabric.Circle({ left: 58 + i * 22, top: 48, radius: 6, fill: c }));
-      });
-
-      // URL bar
-      canvas.add(new fabric.Rect({ left: 160, top: 38, width: 400, height: 22, fill: "#0f172a", stroke: "#475569", strokeWidth: 1, rx: 4 }));
-      canvas.add(new fabric.Text("https://yourapp.com", { left: 362, top: 43, fontSize: 10, fill: "#64748b", fontFamily: "monospace", originX: "center" }));
-
-      // Navbar
-      canvas.add(new fabric.Rect({ left: 40, top: 70, width: 800, height: 50, fill: "#1e293b", stroke: "#334155", strokeWidth: 1 }));
-      canvas.add(new fabric.Text("LOGO", { left: 80, top: 86, fontSize: 14, fill: "#60a5fa", fontFamily: "sans-serif", fontWeight: "bold" }));
-      ["Home", "About", "Features", "Pricing", "Contact"].forEach((item, i) => {
-        canvas.add(new fabric.Text(item, { left: 380 + i * 80, top: 88, fontSize: 11, fill: "#94a3b8", fontFamily: "sans-serif" }));
-      });
-      canvas.add(new fabric.Rect({ left: 730, top: 82, width: 80, height: 28, fill: "#4f46e5", rx: 6 }));
-      canvas.add(new fabric.Text("Sign Up", { left: 770, top: 90, fontSize: 11, fill: "#fff", fontFamily: "sans-serif", originX: "center" }));
-
-      // Hero
-      canvas.add(new fabric.Rect({ left: 40, top: 120, width: 800, height: 160, fill: "#0f172a", stroke: "#1e293b", strokeWidth: 1 }));
-      canvas.add(new fabric.Text("Hero Headline Goes Here", { left: 440, top: 148, fontSize: 22, fill: "#e2e8f0", fontFamily: "sans-serif", originX: "center", fontWeight: "bold" }));
-      canvas.add(new fabric.Text("Subheading text that describes your product or service in a few words.", { left: 440, top: 182, fontSize: 11, fill: "#64748b", fontFamily: "sans-serif", originX: "center" }));
-      canvas.add(new fabric.Rect({ left: 360, top: 210, width: 100, height: 32, fill: "#4f46e5", rx: 6 }));
-      canvas.add(new fabric.Text("Get Started", { left: 410, top: 219, fontSize: 11, fill: "#fff", fontFamily: "sans-serif", originX: "center" }));
-      canvas.add(new fabric.Rect({ left: 476, top: 210, width: 100, height: 32, fill: "transparent", stroke: "#4f46e5", strokeWidth: 2, rx: 6 }));
-      canvas.add(new fabric.Text("Learn More", { left: 526, top: 219, fontSize: 11, fill: "#60a5fa", fontFamily: "sans-serif", originX: "center" }));
-
-      // Cards
-      [0, 1, 2].forEach((i) => {
-        const cx = 60 + i * 270;
-        canvas.add(new fabric.Rect({ left: cx, top: 300, width: 240, height: 160, fill: "#1e293b", stroke: "#334155", strokeWidth: 1, rx: 8 }));
-        canvas.add(new fabric.Rect({ left: cx, top: 300, width: 240, height: 80, fill: "#334155", rx: 8 }));
-        canvas.add(new fabric.Text(`Feature ${i + 1}`, { left: cx + 120, top: 396, fontSize: 13, fill: "#e2e8f0", fontFamily: "sans-serif", originX: "center", fontWeight: "bold" }));
-        canvas.add(new fabric.Text("Description text here", { left: cx + 120, top: 420, fontSize: 10, fill: "#64748b", fontFamily: "sans-serif", originX: "center" }));
-      });
-
-      canvas.renderAll();
-    },
-  },
-];
+// ✅ Fixed default board dimensions
+const DEFAULT_WIDTH = 1400;
+const DEFAULT_HEIGHT = 800;
 
 export default function WhiteboardView({ databaseId }: { databaseId: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<any>(null);
-  const [isReady, setIsReady] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [showTemplates, setShowTemplates] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [activeTool, setActiveTool] = useState<"pen" | "select" | "rect" | "circle" | "text" | "eraser">("pen");
-  const [activeColor, setActiveColor] = useState("#ffffff");
-  const [brushSize, setBrushSize] = useState(3);
-  const [activeTemplate, setActiveTemplate] = useState<TemplateName>("blank");
+  const fabricLibRef = useRef<any>(null);
+  const drawingShapeRef = useRef<any>(null);
+  const startPointRef = useRef<{ x: number; y: number } | null>(null);
+  const isDrawingRef = useRef(false);
+  const suppressUndoRef = useRef(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [isReady, setIsReady] = useState(false);
+  const [activeTool, setActiveTool] = useState<Tool>("pen");
+  const [activeColor, setActiveColor] = useState("#ffffff");
+  const [fillColor, setFillColor] = useState("transparent");
+  const [boardColor, setBoardColor] = useState("#1a1a2e");
+  const [brushSize, setBrushSize] = useState(3);
+  const [fontSize, setFontSize] = useState(18);
+  const [opacity, setOpacity] = useState(100);
+  const [isBold, setIsBold] = useState(false);
+  const [isItalic, setIsItalic] = useState(false);
+  const [undoStack, setUndoStack] = useState<any[]>([]);
+  const [redoStack, setRedoStack] = useState<any[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [zoom, setZoom] = useState(100);
+  const [boardWidth, setBoardWidth] = useState(DEFAULT_WIDTH);
+  const [boardHeight, setBoardHeight] = useState(DEFAULT_HEIGHT);
+  const [showSizeMenu, setShowSizeMenu] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState<"stroke" | "fill" | "board" | null>(null);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+  const sizeMenuRef = useRef<HTMLDivElement>(null);
+
+  // ── Close dropdowns on outside click ──
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as Node)) {
+        setShowColorPicker(null);
+      }
+      if (sizeMenuRef.current && !sizeMenuRef.current.contains(e.target as Node)) {
+        setShowSizeMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // ── Apply board color ──
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    canvas.setBackgroundColor(boardColor, () => canvas.renderAll());
+  }, [boardColor]);
+
+  // ── Resize board ──
+  const resizeBoard = useCallback((w: number, h: number) => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    setBoardWidth(w);
+    setBoardHeight(h);
+    canvas.setWidth(w);
+    canvas.setHeight(h);
+    canvas.renderAll();
+  }, []);
+
+  // ── Save to DB ──
+  const saveToDatabase = useCallback(async (json: any) => {
+    if (!databaseId) return;
+    setSaving(true);
+    try {
+      await fetch(`/api/databases/${databaseId}/whiteboard`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ canvas: json }),
+      });
+      setSavedAt(new Date().toLocaleTimeString());
+    } catch (err) {
+      console.error("Save failed:", err);
+    } finally {
+      setSaving(false);
+    }
+  }, [databaseId]);
+
+  // ── Load from DB ──
+  const loadFromDatabase = useCallback(async () => {
+    if (!databaseId || !fabricRef.current) return;
+    try {
+      const res = await fetch(`/api/databases/${databaseId}/whiteboard`);
+      const data = await res.json();
+      if (data.canvas && fabricRef.current) {
+        fabricRef.current.loadFromJSON(data.canvas, () => {
+          fabricRef.current.renderAll();
+        });
+      }
+    } catch (err) {
+      console.error("Load failed:", err);
+    }
+  }, [databaseId]);
+
+  // ── Push undo ──
+  const pushUndo = useCallback(() => {
+    if (suppressUndoRef.current) return;
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const json = canvas.toJSON();
+    setUndoStack((prev) => [...prev.slice(-29), json]);
+    setRedoStack([]);
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => saveToDatabase(json), 2000);
+  }, [saveToDatabase]);
+
+  // ── Init Fabric ──
   useEffect(() => {
     if (!canvasRef.current) return;
+    let disposed = false;
 
     import("fabric").then((mod) => {
+      if (disposed) return;
       const fabric = mod.fabric ?? mod;
-      const parent = canvasRef.current?.parentElement;
+      fabricLibRef.current = fabric;
+
+      // ✅ Fixed size canvas
       const canvas = new fabric.Canvas(canvasRef.current, {
         isDrawingMode: true,
         backgroundColor: "#1a1a2e",
-        width: parent?.offsetWidth || 900,
-        height: parent?.offsetHeight || 520,
+        width: DEFAULT_WIDTH,
+        height: DEFAULT_HEIGHT,
+        preserveObjectStacking: true,
+        renderOnAddRemove: false,
       });
 
-      canvas.freeDrawingBrush.color = "#ffffff";
-      canvas.freeDrawingBrush.width = 3;
+      const brush = new fabric.PencilBrush(canvas);
+      brush.color = "#ffffff";
+      brush.width = 3;
+      canvas.freeDrawingBrush = brush;
+
       fabricRef.current = canvas;
       setIsReady(true);
 
-      // Auto-open template picker on first load
-      setShowTemplates(true);
+      canvas.on("object:added",    () => { if (!suppressUndoRef.current) pushUndo(); });
+      canvas.on("object:modified", () => { if (!suppressUndoRef.current) pushUndo(); });
+      canvas.on("object:removed",  () => { if (!suppressUndoRef.current) pushUndo(); });
 
-      const handleResize = () => {
-        const p = canvasRef.current?.parentElement;
-        if (!p) return;
-        canvas.setWidth(p.offsetWidth);
-        canvas.setHeight(p.offsetHeight);
-        canvas.renderAll();
-      };
-      window.addEventListener("resize", handleResize);
-      return () => {
-        window.removeEventListener("resize", handleResize);
-        canvas.dispose();
-      };
-    });
+      setTimeout(() => loadFromDatabase(), 300);
+    }).catch((err) => console.error("Fabric load failed:", err));
 
-    return () => { fabricRef.current?.dispose(); };
+    return () => {
+      disposed = true;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      fabricRef.current?.dispose();
+    };
   }, []);
 
+  // ── Tool sync ──
   useEffect(() => {
     const canvas = fabricRef.current;
-    if (!canvas) return;
+    const fabric = fabricLibRef.current;
+    if (!canvas || !fabric) return;
+
+    canvas.off("mouse:down");
+    canvas.off("mouse:move");
+    canvas.off("mouse:up");
+
     if (activeTool === "pen") {
       canvas.isDrawingMode = true;
-      canvas.freeDrawingBrush.color = activeColor;
-      canvas.freeDrawingBrush.width = brushSize;
+      canvas.selection = true;
+      canvas.defaultCursor = "crosshair";
+      const brush = new fabric.PencilBrush(canvas);
+      brush.color = activeColor;
+      brush.width = brushSize;
+      canvas.freeDrawingBrush = brush;
+    } else if (activeTool === "highlighter") {
+      canvas.isDrawingMode = true;
+      canvas.selection = true;
+      const brush = new fabric.PencilBrush(canvas);
+      brush.color = activeColor + "66";
+      brush.width = brushSize * 6;
+      canvas.freeDrawingBrush = brush;
     } else if (activeTool === "eraser") {
       canvas.isDrawingMode = true;
-      canvas.freeDrawingBrush.color = "#1a1a2e";
-      canvas.freeDrawingBrush.width = brushSize * 4;
+      canvas.selection = false;
+      canvas.defaultCursor = "cell";
+      const brush = new fabric.PencilBrush(canvas);
+      brush.color = boardColor;
+      brush.width = brushSize * 5;
+      canvas.freeDrawingBrush = brush;
+    } else if (activeTool === "select") {
+      canvas.isDrawingMode = false;
+      canvas.selection = true;
+      canvas.defaultCursor = "default";
     } else {
       canvas.isDrawingMode = false;
-    }
-  }, [activeTool, activeColor, brushSize]);
+      canvas.selection = false;
+      canvas.defaultCursor = "crosshair";
 
-  const applyTemplate = async (template: Template) => {
+      const onMouseDown = (opt: any) => {
+        suppressUndoRef.current = true;
+        const pointer = canvas.getPointer(opt.e);
+        startPointRef.current = { x: pointer.x, y: pointer.y };
+        isDrawingRef.current = true;
+
+        const fill = fillColor === "transparent" ? "rgba(0,0,0,0)" : fillColor;
+        let shape: any = null;
+
+        if (activeTool === "rectangle") {
+          shape = new fabric.Rect({
+            left: pointer.x, top: pointer.y, width: 1, height: 1,
+            fill, stroke: activeColor, strokeWidth: brushSize,
+            opacity: opacity / 100, selectable: false, evented: false,
+          });
+        } else if (activeTool === "circle") {
+          shape = new fabric.Ellipse({
+            left: pointer.x, top: pointer.y, rx: 1, ry: 1,
+            fill, stroke: activeColor, strokeWidth: brushSize,
+            opacity: opacity / 100, selectable: false, evented: false,
+          });
+        } else if (activeTool === "triangle") {
+          shape = new fabric.Triangle({
+            left: pointer.x, top: pointer.y, width: 1, height: 1,
+            fill, stroke: activeColor, strokeWidth: brushSize,
+            opacity: opacity / 100, selectable: false, evented: false,
+          });
+        } else if (activeTool === "line") {
+          shape = new fabric.Line(
+            [pointer.x, pointer.y, pointer.x, pointer.y],
+            { stroke: activeColor, strokeWidth: brushSize, opacity: opacity / 100, selectable: false, evented: false }
+          );
+        }
+
+        if (shape) {
+          canvas.add(shape);
+          canvas.renderAll();
+          drawingShapeRef.current = shape;
+        }
+      };
+
+      const onMouseMove = (opt: any) => {
+        if (!isDrawingRef.current || !startPointRef.current || !drawingShapeRef.current) return;
+        const pointer = canvas.getPointer(opt.e);
+        const sp = startPointRef.current;
+        const shape = drawingShapeRef.current;
+
+        if (activeTool === "rectangle" || activeTool === "triangle") {
+          shape.set({
+            left: Math.min(pointer.x, sp.x), top: Math.min(pointer.y, sp.y),
+            width: Math.abs(pointer.x - sp.x) || 1, height: Math.abs(pointer.y - sp.y) || 1,
+          });
+          shape.setCoords();
+        } else if (activeTool === "circle") {
+          shape.set({
+            left: Math.min(pointer.x, sp.x), top: Math.min(pointer.y, sp.y),
+            rx: Math.abs(pointer.x - sp.x) / 2 || 1, ry: Math.abs(pointer.y - sp.y) / 2 || 1,
+          });
+          shape.setCoords();
+        } else if (activeTool === "line") {
+          shape.set({ x2: pointer.x, y2: pointer.y });
+        }
+        canvas.requestRenderAll();
+      };
+
+      const onMouseUp = () => {
+        if (!isDrawingRef.current) return;
+        isDrawingRef.current = false;
+        startPointRef.current = null;
+        const shape = drawingShapeRef.current;
+        if (shape) {
+          shape.set({ selectable: true, evented: true, hasControls: true, hasBorders: true });
+          shape.setCoords();
+          drawingShapeRef.current = null;
+          canvas.renderAll();
+          suppressUndoRef.current = false;
+          pushUndo();
+        } else {
+          suppressUndoRef.current = false;
+        }
+      };
+
+      canvas.on("mouse:down", onMouseDown);
+      canvas.on("mouse:move", onMouseMove);
+      canvas.on("mouse:up", onMouseUp);
+
+      return () => {
+        canvas.off("mouse:down", onMouseDown);
+        canvas.off("mouse:move", onMouseMove);
+        canvas.off("mouse:up", onMouseUp);
+        canvas.selection = true;
+        canvas.defaultCursor = "default";
+      };
+    }
+  }, [activeTool, activeColor, fillColor, boardColor, brushSize, opacity, pushUndo]);
+
+  // ── Add text ──
+  const addText = async (sticky = false) => {
+    const fabric = fabricLibRef.current;
+    const canvas = fabricRef.current;
+    if (!fabric || !canvas) return;
+
+    if (sticky) {
+      const rect = new fabric.Rect({ width: 170, height: 120, fill: "#fef08a", stroke: "#ca8a04", strokeWidth: 1, rx: 4 });
+      const text = new fabric.IText("Sticky note", { left: 85, top: 60, fill: "#713f12", fontSize: 14, fontFamily: "sans-serif", originX: "center", originY: "center" });
+      const group = new fabric.Group([rect, text], { left: 100, top: 100 });
+      canvas.add(group);
+    } else {
+      const text = new fabric.IText("Type here...", {
+        left: 120, top: 120, fill: activeColor, fontSize,
+        fontFamily: "sans-serif",
+        fontWeight: isBold ? "bold" : "normal",
+        fontStyle: isItalic ? "italic" : "normal",
+        opacity: opacity / 100,
+      });
+      canvas.add(text);
+      canvas.setActiveObject(text);
+      text.enterEditing();
+    }
+    setActiveTool("select");
+    pushUndo();
+  };
+
+  // ── Undo / Redo ──
+  const handleUndo = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || undoStack.length === 0) return;
+    const current = canvas.toJSON();
+    const prev = undoStack[undoStack.length - 1];
+    setRedoStack((r) => [...r, current]);
+    setUndoStack((u) => u.slice(0, -1));
+    suppressUndoRef.current = true;
+    canvas.loadFromJSON(prev, () => { canvas.renderAll(); suppressUndoRef.current = false; });
+  }, [undoStack]);
+
+  const handleRedo = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || redoStack.length === 0) return;
+    const current = canvas.toJSON();
+    const next = redoStack[redoStack.length - 1];
+    setUndoStack((u) => [...u, current]);
+    setRedoStack((r) => r.slice(0, -1));
+    suppressUndoRef.current = true;
+    canvas.loadFromJSON(next, () => { canvas.renderAll(); suppressUndoRef.current = false; });
+  }, [redoStack]);
+
+  const deleteSelected = () => {
     const canvas = fabricRef.current;
     if (!canvas) return;
-    const mod = await import("fabric");
-    const fabric = mod.fabric ?? mod;
-    canvas.clear();
-    canvas.setBackgroundColor("#1a1a2e", () => {
-      template.apply(canvas, fabric, activeColor);
-      canvas.renderAll();
-    });
-    setActiveTemplate(template.name);
-    setShowTemplates(false);
-    setActiveTool("select");
-  };
-
-  const addRect = async () => {
-    const mod = await import("fabric");
-    const fabric = mod.fabric ?? mod;
-    const rect = new fabric.Rect({ left: 100, top: 100, width: 130, height: 80, fill: "transparent", stroke: activeColor, strokeWidth: 2 });
-    fabricRef.current?.add(rect);
-    fabricRef.current?.setActiveObject(rect);
-    setActiveTool("select");
-  };
-
-  const addCircle = async () => {
-    const mod = await import("fabric");
-    const fabric = mod.fabric ?? mod;
-    const circle = new fabric.Circle({ left: 150, top: 150, radius: 50, fill: "transparent", stroke: activeColor, strokeWidth: 2 });
-    fabricRef.current?.add(circle);
-    fabricRef.current?.setActiveObject(circle);
-    setActiveTool("select");
-  };
-
-  const addText = async () => {
-    const mod = await import("fabric");
-    const fabric = mod.fabric ?? mod;
-    const text = new fabric.IText("Type here...", { left: 120, top: 120, fill: activeColor, fontSize: 18, fontFamily: "sans-serif" });
-    fabricRef.current?.add(text);
-    fabricRef.current?.setActiveObject(text);
-    setActiveTool("select");
+    canvas.getActiveObjects().forEach((obj: any) => canvas.remove(obj));
+    canvas.discardActiveObject();
+    canvas.renderAll();
+    pushUndo();
   };
 
   const handleClear = () => {
-    fabricRef.current?.clear();
-    fabricRef.current?.setBackgroundColor("#1a1a2e", () => fabricRef.current?.renderAll());
+    if (!confirm("Clear the entire canvas?")) return;
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    suppressUndoRef.current = true;
+    canvas.clear();
+    canvas.setBackgroundColor(boardColor, () => { canvas.renderAll(); suppressUndoRef.current = false; pushUndo(); });
   };
 
   const handleDownload = () => {
@@ -437,223 +378,402 @@ export default function WhiteboardView({ databaseId }: { databaseId: string }) {
     a.click();
   };
 
+  const handleZoom = (delta: number) => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const newZoom = Math.min(Math.max(zoom + delta, 25), 400);
+    setZoom(newZoom);
+    canvas.setZoom(newZoom / 100);
+    canvas.renderAll();
+  };
+
+  const handleManualSave = () => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    saveToDatabase(canvas.toJSON());
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(`${window.location.origin}?whiteboard=${databaseId}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const COLORS = ["#ffffff", "#f87171", "#fb923c", "#facc15", "#4ade80", "#60a5fa", "#c084fc", "#f472b6"];
+  // ── Keyboard shortcuts ──
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") { e.preventDefault(); handleUndo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === "y") { e.preventDefault(); handleRedo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); handleManualSave(); }
+      if ((e.key === "Delete" || e.key === "Backspace") && fabricRef.current?.getActiveObject()) {
+        e.preventDefault(); deleteSelected();
+      }
+      if (!e.ctrlKey && !e.metaKey) {
+        if (e.key === "v") setActiveTool("select");
+        if (e.key === "p") setActiveTool("pen");
+        if (e.key === "e") setActiveTool("eraser");
+        if (e.key === "r") setActiveTool("rectangle");
+        if (e.key === "c") setActiveTool("circle");
+        if (e.key === "t") addText(false);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [handleUndo, handleRedo, activeTool]);
 
-  const toolBtn = (
-    tool: typeof activeTool,
-    icon: React.ReactNode,
-    title: string,
-    onClick?: () => void
-  ) => (
+  const STROKE_COLORS = [
+    "#ffffff","#000000","#ef4444","#f97316","#eab308",
+    "#22c55e","#3b82f6","#8b5cf6","#ec4899","#06b6d4",
+    "#a3a3a3","#fbbf24","#34d399","#60a5fa","#f472b6",
+  ];
+
+  const BOARD_COLORS = [
+    "#1a1a2e","#0f0f13","#ffffff","#f8fafc","#1e293b",
+    "#0f172a","#18181b","#fef9c3","#ecfdf5","#eff6ff",
+  ];
+
+  // ✅ Preset board sizes
+  const BOARD_SIZES = [
+    { label: "Small",       w: 800,  h: 500,  desc: "800×500" },
+    { label: "Default",     w: 1400, h: 800,  desc: "1400×800" },
+    { label: "Large",       w: 1920, h: 1080, desc: "1920×1080 (HD)" },
+    { label: "A4 Portrait", w: 794,  h: 1123, desc: "A4 Portrait" },
+    { label: "A4 Landscape",w: 1123, h: 794,  desc: "A4 Landscape" },
+    { label: "Square",      w: 1000, h: 1000, desc: "1000×1000" },
+    { label: "4K",          w: 3840, h: 2160, desc: "3840×2160 (4K)" },
+  ];
+
+  const ToolBtn = ({ tool, icon, title, shortcut, onClick }: {
+    tool?: Tool; icon: React.ReactNode; title: string; shortcut?: string; onClick?: () => void;
+  }) => (
     <button
-      onClick={onClick ?? (() => setActiveTool(tool))}
-      title={title}
-      className={`w-7 h-7 flex items-center justify-center rounded-md transition ${
-        activeTool === tool
-          ? "bg-violet-600 text-white"
-          : "text-gray-400 hover:text-white hover:bg-white/10"
-      }`}
+      onClick={onClick ?? (() => tool && setActiveTool(tool))}
+      title={`${title}${shortcut ? ` (${shortcut})` : ""}`}
+      className={`w-7 h-7 flex items-center justify-center rounded-md transition-all
+        ${tool && activeTool === tool
+          ? "bg-violet-600 text-white shadow-sm shadow-violet-500/30"
+          : "text-gray-400 hover:bg-white/10 hover:text-white"
+        }`}
     >
       {icon}
     </button>
   );
 
   return (
-    <div className="flex flex-col h-full bg-[#0d0d0f] rounded-xl overflow-hidden border border-white/[0.06]">
+    <div className="flex flex-col w-full h-full overflow-hidden bg-[#0d0d0f] rounded-xl border border-white/[0.06]">
 
-      {/* ── Top Bar ── */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#111114] border-b border-white/[0.06] flex-wrap gap-2">
+      {/* ══ TOOLBAR ROW 1 ══ */}
+      <div className="flex items-center gap-0.5 px-2 py-1.5 bg-[#111114] border-b border-white/[0.06] shrink-0 flex-wrap">
 
-        {/* Left */}
-        <div className="flex items-center gap-2">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-violet-400 shrink-0">
+        {/* Title */}
+        <div className="flex items-center gap-1.5 pr-2 border-r border-white/10">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-violet-400 shrink-0">
             <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
           </svg>
-          <span className="text-white text-xs font-semibold">Whiteboard</span>
-          <span className={`w-1.5 h-1.5 rounded-full ${isReady ? "bg-emerald-400" : "bg-gray-600"}`} />
+          <span className="text-white text-[11px] font-semibold tracking-tight">Whiteboard</span>
+          <span className={`w-1.5 h-1.5 rounded-full ${isReady ? "bg-emerald-400" : "bg-amber-400"}`} />
         </div>
 
-        {/* Center: Tools */}
-        <div className="flex items-center gap-1 flex-wrap">
-
-          {/* Template picker button */}
-          <button
-            onClick={() => setShowTemplates(true)}
-            className="flex items-center gap-1 px-2 py-1 bg-violet-600/20 hover:bg-violet-600/40 border border-violet-500/30 text-violet-300 rounded-md text-[11px] font-medium transition"
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-            </svg>
-            Templates
-          </button>
-
-          <div className="w-px h-4 bg-white/10 mx-0.5" />
-
-          {/* Pen */}
-          {toolBtn("pen",
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-            </svg>, "Pen"
-          )}
-          {/* Select */}
-          {toolBtn("select",
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M5 3l14 9-7 1-4 7z"/>
-            </svg>, "Select"
-          )}
-          {/* Rect */}
-          {toolBtn("rect",
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-            </svg>, "Rectangle", addRect
-          )}
-          {/* Circle */}
-          {toolBtn("circle",
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="9"/>
-            </svg>, "Circle", addCircle
-          )}
-          {/* Text */}
-          {toolBtn("text",
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>
-            </svg>, "Text", addText
-          )}
-          {/* Eraser */}
-          {toolBtn("eraser",
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 20H7L3 16l10-10 7 7-2.5 2.5"/><path d="M6 11l4 4"/>
-            </svg>, "Eraser"
-          )}
-
-          <div className="w-px h-4 bg-white/10 mx-0.5" />
-
-          {/* Colors */}
-          {COLORS.map((c) => (
-            <button
-              key={c}
-              onClick={() => { setActiveColor(c); setActiveTool("pen"); }}
-              className={`w-4 h-4 rounded-full border-2 transition ${activeColor === c ? "border-white scale-125" : "border-transparent"}`}
-              style={{ backgroundColor: c }}
-            />
-          ))}
-
-          <div className="w-px h-4 bg-white/10 mx-0.5" />
-
-          <input
-            type="range" min={1} max={20} value={brushSize}
-            onChange={(e) => setBrushSize(Number(e.target.value))}
-            className="w-16 h-1 accent-violet-500 cursor-pointer"
-            title="Brush size"
+        {/* File ops */}
+        <div className="flex items-center gap-0.5 px-2 border-r border-white/10">
+          <ToolBtn title="Save" shortcut="Ctrl+S" onClick={handleManualSave}
+            icon={saving
+              ? <div className="w-3 h-3 border border-violet-400 border-t-transparent rounded-full animate-spin" />
+              : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            }
+          />
+          <ToolBtn title="Download PNG" onClick={handleDownload}
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}
+          />
+          <ToolBtn title="Share" onClick={() => setShowShareModal(true)}
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>}
           />
         </div>
 
-        {/* Right */}
-        <div className="flex items-center gap-1">
-          <button onClick={() => setShowShareModal(true)} title="Share"
-            className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-            </svg>
-          </button>
-          <button onClick={handleDownload} disabled={!isReady} title="Download PNG"
-            className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:text-emerald-400 hover:bg-emerald-400/10 disabled:opacity-30 transition">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-          </button>
-          <div className="w-px h-3 bg-white/10 mx-0.5" />
-          <button onClick={handleClear} disabled={!isReady} title="Clear canvas"
-            className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:text-rose-400 hover:bg-rose-400/10 disabled:opacity-30 transition">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
-              <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
-            </svg>
-          </button>
+        {/* Edit ops */}
+        <div className="flex items-center gap-0.5 px-2 border-r border-white/10">
+          <ToolBtn title="Undo" shortcut="Ctrl+Z" onClick={handleUndo}
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>}
+          />
+          <ToolBtn title="Redo" shortcut="Ctrl+Y" onClick={handleRedo}
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>}
+          />
+          <ToolBtn title="Delete selected" shortcut="Del" onClick={deleteSelected}
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>}
+          />
+          <ToolBtn title="Clear canvas" onClick={handleClear}
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 20H7L3 16l10-10 7 7-2.5 2.5"/><path d="M6 11l4 4"/></svg>}
+          />
         </div>
-      </div>
 
-      {/* ── Canvas ── */}
-      <div className="flex-1 overflow-hidden relative" style={{ minHeight: 0 }}>
-        {!isReady && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a2e] gap-3 z-10">
-            <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs text-gray-500 tracking-widest uppercase">Loading canvas</span>
-          </div>
-        )}
-        <canvas ref={canvasRef} className="w-full h-full" />
-      </div>
+        {/* Zoom */}
+        <div className="flex items-center gap-1 px-2 border-r border-white/10">
+          <button onClick={() => handleZoom(-10)} className="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-white hover:bg-white/10 text-sm font-bold">−</button>
+          <span className="text-[10px] text-gray-500 w-9 text-center">{zoom}%</span>
+          <button onClick={() => handleZoom(10)} className="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-white hover:bg-white/10 text-sm font-bold">+</button>
+          <button onClick={() => { setZoom(100); fabricRef.current?.setZoom(1); fabricRef.current?.renderAll(); }}
+            className="text-[9px] text-gray-500 hover:text-gray-300 px-1 transition">Reset</button>
+        </div>
 
-      {/* ── Status Bar ── */}
-      <div className="flex items-center justify-between px-3 py-1 bg-[#111114] border-t border-white/[0.06]">
-        <span className="text-[10px] text-gray-600">{isReady ? "● active" : "○ loading"}</span>
-        <span className="text-[10px] text-gray-600 tracking-widest">fabric.js · {activeTemplate}</span>
-      </div>
-
-      {/* ── Template Picker Modal ── */}
-      {showTemplates && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setShowTemplates(false)}
-        >
-          <div
-            className="bg-[#111114] rounded-2xl p-6 w-full max-w-lg border border-white/10 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+        {/* ✅ Board size picker */}
+        <div className="relative px-2 border-r border-white/10" ref={sizeMenuRef}>
+          <button
+            onClick={() => setShowSizeMenu(!showSizeMenu)}
+            className="flex items-center gap-1.5 h-6 px-2 rounded-md text-[10px] text-gray-400 hover:text-white hover:bg-white/10 transition border border-white/10"
           >
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-sm font-bold text-white">Choose a Template</h2>
-                <p className="text-[11px] text-gray-500 mt-0.5">Start with a pre-built layout or blank canvas</p>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M3 9h18M9 3v18"/>
+            </svg>
+            <span>{boardWidth}×{boardHeight}</span>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+
+          {showSizeMenu && (
+            <div className="absolute top-full left-0 mt-1 z-50 bg-[#111114] border border-white/10 rounded-xl shadow-2xl p-2 w-52">
+              <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider px-2 mb-1.5">Board Size</p>
+              <div className="space-y-0.5">
+                {BOARD_SIZES.map((size) => (
+                  <button
+                    key={size.label}
+                    onClick={() => { resizeBoard(size.w, size.h); setShowSizeMenu(false); }}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[10px] transition ${
+                      boardWidth === size.w && boardHeight === size.h
+                        ? "bg-violet-600/20 text-violet-300 border border-violet-500/30"
+                        : "text-gray-400 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <span className="font-medium">{size.label}</span>
+                    <span className="text-gray-600">{size.desc}</span>
+                  </button>
+                ))}
               </div>
-              <button
-                onClick={() => setShowTemplates(false)}
-                className="w-6 h-6 flex items-center justify-center rounded-md text-gray-500 hover:text-white hover:bg-white/10 transition"
-              >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {TEMPLATES.map((t) => (
-                <button
-                  key={t.name}
-                  onClick={() => applyTemplate(t)}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition hover:border-violet-500 hover:bg-violet-500/10 ${
-                    activeTemplate === t.name
-                      ? "border-violet-500 bg-violet-500/10"
-                      : "border-white/10 bg-white/[0.03]"
-                  }`}
-                >
-                  <span className="text-2xl">{t.icon}</span>
-                  <span className="text-[11px] text-gray-300 font-medium">{t.label}</span>
-                </button>
-              ))}
+              {/* Custom size inputs */}
+              <div className="mt-2 pt-2 border-t border-white/10 px-2">
+                <p className="text-[9px] text-gray-500 mb-1.5">Custom</p>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number" min={100} max={8000}
+                    defaultValue={boardWidth}
+                    onBlur={(e) => {
+                      const w = Math.min(8000, Math.max(100, Number(e.target.value)));
+                      resizeBoard(w, boardHeight);
+                    }}
+                    className="w-16 h-5 text-[9px] bg-[#1a1a24] border border-white/10 rounded px-1 text-gray-300 focus:outline-none focus:border-violet-500"
+                    placeholder="W"
+                  />
+                  <span className="text-[9px] text-gray-600">×</span>
+                  <input
+                    type="number" min={100} max={8000}
+                    defaultValue={boardHeight}
+                    onBlur={(e) => {
+                      const h = Math.min(8000, Math.max(100, Number(e.target.value)));
+                      resizeBoard(boardWidth, h);
+                    }}
+                    className="w-16 h-5 text-[9px] bg-[#1a1a24] border border-white/10 rounded px-1 text-gray-300 focus:outline-none focus:border-violet-500"
+                    placeholder="H"
+                  />
+                </div>
+              </div>
             </div>
+          )}
+        </div>
+
+        {/* Status */}
+        <div className="ml-auto flex items-center gap-2">
+          {saving && <span className="text-[9px] text-amber-400 animate-pulse">● Saving…</span>}
+          {!saving && savedAt && <span className="text-[9px] text-emerald-400">✓ {savedAt}</span>}
+        </div>
+      </div>
+
+      {/* ══ TOOLBAR ROW 2 — Drawing Tools ══ */}
+      <div className="flex items-center gap-0.5 px-2 py-1.5 bg-[#0f0f12] border-b border-white/[0.06] shrink-0 flex-wrap">
+
+        {/* Selection & draw */}
+        <div className="flex items-center gap-0.5 pr-2 border-r border-white/10">
+          <ToolBtn tool="select" title="Select" shortcut="V"
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-7 1-4 7z"/></svg>} />
+          <ToolBtn tool="pen" title="Pen" shortcut="P"
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>} />
+          <ToolBtn tool="highlighter" title="Highlighter"
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 11-6 6v3h3l6-6"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>} />
+          <ToolBtn tool="eraser" title="Eraser" shortcut="E"
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 20H7L3 16l10-10 7 7-2.5 2.5"/><path d="M6 11l4 4"/></svg>} />
+        </div>
+
+        {/* Shapes */}
+        <div className="flex items-center gap-0.5 px-2 border-r border-white/10">
+          <ToolBtn tool="rectangle" title="Rectangle" shortcut="R"
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg>} />
+          <ToolBtn tool="circle" title="Ellipse" shortcut="C"
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><ellipse cx="12" cy="12" rx="10" ry="7"/></svg>} />
+          <ToolBtn tool="triangle" title="Triangle"
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3L2 21h20z"/></svg>} />
+          <ToolBtn tool="line" title="Line"
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="21" x2="21" y2="3"/></svg>} />
+        </div>
+
+        {/* Text */}
+        <div className="flex items-center gap-0.5 px-2 border-r border-white/10">
+          <ToolBtn tool="text" title="Text" shortcut="T" onClick={() => addText(false)}
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>} />
+          <ToolBtn tool="sticky" title="Sticky Note" onClick={() => addText(true)}
+            icon={<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><polyline points="15 3 15 9 21 9"/></svg>} />
+        </div>
+
+        {/* Colors */}
+        <div className="flex items-center gap-1.5 px-2 border-r border-white/10 relative" ref={colorPickerRef}>
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-[8px] text-gray-500">Stroke</span>
+            <button onClick={() => setShowColorPicker(showColorPicker === "stroke" ? null : "stroke")}
+              className="w-5 h-5 rounded border border-white/20 hover:border-white/50 transition shadow-sm"
+              style={{ backgroundColor: activeColor }} />
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-[8px] text-gray-500">Fill</span>
+            <button onClick={() => setShowColorPicker(showColorPicker === "fill" ? null : "fill")}
+              className="w-5 h-5 rounded border border-white/20 hover:border-white/50 transition relative overflow-hidden"
+              style={{ backgroundColor: fillColor === "transparent" ? "#0d0d0f" : fillColor }}>
+              {fillColor === "transparent" && <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-px bg-red-500 rotate-45" /></div>}
+            </button>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-[8px] text-gray-500">Board</span>
+            <button onClick={() => setShowColorPicker(showColorPicker === "board" ? null : "board")}
+              className="w-5 h-5 rounded border-2 border-dashed border-white/30 hover:border-white/60 transition"
+              style={{ backgroundColor: boardColor }} />
+          </div>
+
+          {showColorPicker && (
+            <div className="absolute top-full left-0 mt-1 z-50 bg-[#111114] border border-white/10 rounded-xl shadow-2xl p-3 w-52">
+              <p className="text-[9px] font-semibold text-gray-500 mb-2 uppercase tracking-wider">
+                {showColorPicker === "stroke" ? "Stroke" : showColorPicker === "fill" ? "Fill" : "Board Background"}
+              </p>
+              <div className="grid grid-cols-5 gap-1.5 mb-2">
+                {(showColorPicker === "board" ? BOARD_COLORS : STROKE_COLORS).map((c) => (
+                  <button key={c} onClick={() => {
+                    if (showColorPicker === "stroke") setActiveColor(c);
+                    else if (showColorPicker === "fill") setFillColor(c);
+                    else setBoardColor(c);
+                    setShowColorPicker(null);
+                  }}
+                    className="w-7 h-7 rounded-md border-2 transition hover:scale-110"
+                    style={{
+                      backgroundColor: c,
+                      borderColor: (showColorPicker === "stroke" ? activeColor : showColorPicker === "fill" ? fillColor : boardColor) === c ? "#8b5cf6" : "transparent",
+                      boxShadow: (c === "#ffffff" || c === "#f8fafc") ? "inset 0 0 0 1px rgba(255,255,255,0.2)" : undefined,
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="color"
+                  value={showColorPicker === "stroke" ? activeColor : showColorPicker === "fill" ? (fillColor === "transparent" ? "#1a1a2e" : fillColor) : boardColor}
+                  onChange={(e) => {
+                    if (showColorPicker === "stroke") setActiveColor(e.target.value);
+                    else if (showColorPicker === "fill") setFillColor(e.target.value);
+                    else setBoardColor(e.target.value);
+                  }}
+                  className="w-6 h-6 rounded border border-white/10 cursor-pointer bg-transparent"
+                />
+                <span className="text-[9px] text-gray-500">Custom</span>
+                {showColorPicker === "fill" && (
+                  <button onClick={() => { setFillColor("transparent"); setShowColorPicker(null); }}
+                    className="ml-auto text-[9px] text-red-400 hover:text-red-300 transition">None</button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Size */}
+        <div className="flex items-center gap-1 px-2 border-r border-white/10">
+          <span className="text-[9px] text-gray-500">Size</span>
+          <input type="range" min={1} max={30} value={brushSize}
+            onChange={(e) => setBrushSize(Number(e.target.value))}
+            className="w-16 h-1 accent-violet-500 cursor-pointer" />
+          <span className="text-[9px] text-gray-500 w-4">{brushSize}</span>
+        </div>
+
+        {/* Opacity */}
+        <div className="flex items-center gap-1 px-2 border-r border-white/10">
+          <span className="text-[9px] text-gray-500">Opacity</span>
+          <input type="range" min={10} max={100} value={opacity}
+            onChange={(e) => setOpacity(Number(e.target.value))}
+            className="w-14 h-1 accent-violet-500 cursor-pointer" />
+          <span className="text-[9px] text-gray-500 w-6">{opacity}%</span>
+        </div>
+
+        {/* Text format */}
+        <div className="flex items-center gap-0.5 px-2 border-r border-white/10">
+          <span className="text-[9px] text-gray-500 mr-1">Text:</span>
+          <button onClick={() => setIsBold(!isBold)}
+            className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold transition ${isBold ? "bg-violet-600 text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"}`}>B</button>
+          <button onClick={() => setIsItalic(!isItalic)}
+            className={`w-6 h-6 flex items-center justify-center rounded text-xs italic transition ${isItalic ? "bg-violet-600 text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"}`}>I</button>
+          <input type="number" min={8} max={144} value={fontSize}
+            onChange={(e) => setFontSize(Number(e.target.value))}
+            className="h-5 w-11 text-[9px] border border-white/10 rounded px-1 bg-[#1a1a24] text-gray-300 focus:outline-none focus:border-violet-500 transition" />
+        </div>
+
+        <div className="ml-auto hidden sm:block">
+          <span className="text-[8px] text-gray-600">V P E R C T · Ctrl+Z/Y/S</span>
+        </div>
+      </div>
+
+      {/* ══ CANVAS AREA — scrollable ══ */}
+      <div className="flex-1 overflow-auto bg-[#0a0a0d]" style={{ minHeight: 0 }}>
+        {/* ✅ Centered canvas with padding so user can see board edges */}
+        <div className="flex items-start justify-start p-8 min-w-max min-h-max">
+          {!isReady && (
+            <div
+              className="flex flex-col items-center justify-center gap-3 rounded-lg"
+              style={{ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT, backgroundColor: "#1a1a2e" }}
+            >
+              <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs text-gray-500 tracking-widest uppercase">Loading canvas</span>
+            </div>
+          )}
+          {/* ✅ Shadow around canvas so board edges are clearly visible */}
+          <div
+            className="shadow-2xl shadow-black/60 rounded-sm"
+            style={{
+              width: boardWidth * (zoom / 100),
+              height: boardHeight * (zoom / 100),
+              display: isReady ? "block" : "none",
+            }}
+          >
+            <canvas ref={canvasRef} className="block rounded-sm" />
           </div>
         </div>
-      )}
+      </div>
 
-      {/* ── Share Modal ── */}
+      {/* ══ STATUS BAR ══ */}
+      <div className="flex items-center justify-between px-3 py-1 bg-[#111114] border-t border-white/[0.06] shrink-0">
+        <div className="flex items-center gap-3 text-[9px] text-gray-600">
+          <span>Tool: <span className="text-gray-400">{activeTool}</span></span>
+          <span>Board: {boardWidth}×{boardHeight}</span>
+          <span>Zoom: {zoom}%</span>
+          <span>Undo: {undoStack.length}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {saving && <span className="text-[9px] text-amber-400 animate-pulse">● Saving…</span>}
+          {!saving && savedAt && <span className="text-[9px] text-emerald-400">✓ {savedAt}</span>}
+          <span className="text-[9px] text-gray-600 font-mono">fabric.js</span>
+        </div>
+      </div>
+
+      {/* ══ SHARE MODAL ══ */}
       {showShareModal && (
-        <div
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setShowShareModal(false)}
-        >
-          <div
-            className="bg-[#111114] rounded-2xl p-5 w-full max-w-xs border border-white/10 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowShareModal(false)}>
+          <div className="bg-[#111114] rounded-2xl p-5 w-full max-w-xs border border-white/10 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-white">Share whiteboard</h2>
               <button onClick={() => setShowShareModal(false)}

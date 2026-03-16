@@ -1,85 +1,5 @@
-// import TimelineView from "./TimelineView";
-// import TableView from "./view/TableView";
-// import TableView1 from './gallery/TableView';
-// import GalleryView from "./gallery/GalleryView";
-// import BoardView from "./board/BoardView";
-
-
-// export default function DatabaseViewRenderer({ db }: any) {
-//   if (db.viewType === "timeline") {
-//     return <TimelineView databaseId={db._id}/>
-//   }
-
-//   if (db.viewType === "board") {
-//     return <BoardView databaseId={db._id} />;
-//   }
-
-//   if (db.viewType === "gallery") {
-//     return  <GalleryView databaseId={db._id} />;
-//   }
-//   if(db.viewType === "table"){
-//     return <TableView databaseId={db._id} />
-//   }
-
-//   return <div className="p-6 border rounded-2xl">📊 Table View (coming)</div>;
-// }
-
-
-// import TimelineView from "./TimelineView";
-// import TableView from "./view/TableView";
-// import TableView1 from './gallery/TableView';
-// import GalleryView from "./gallery/GalleryView";
-// import BoardView from "./board/BoardView";
-// import TodoView from "./todo/TodoView";
-// import TextView from "./text/TextView";
-// import HeadingView from "./heading/HeadingView";
-// import NumberListView from "./numberlist/NumberListView";
-// import BulletedListView from "./bullete/BulletedView";
-// import ExcelTable from "./excel/ExcelTable";
-// import { LinkProject } from "./link/LinkProject";
-
-
-// export default function DatabaseViewRenderer({ db, isViewOnly = false }: { db: any; isViewOnly?: boolean }) {
-//   if (db.viewType === "timeline") {
-//     return <TimelineView databaseId={db._id}/>
-//   }
-
-//   if (db.viewType === "board") {
-//     return <BoardView databaseId={db._id} />;
-//   }
-
-//   if (db.viewType === "gallery") {
-//     return  <GalleryView databaseId={db._id} />;
-//   }
-//   if(db.viewType === "table"){
-//     return <TableView databaseId={db._id} isViewOnly={isViewOnly} />
-//     // return <ExcelTable/>
-//   }
-//   if(db.viewType === "todo"){
-//     return <TodoView databaseId={db._id} />;
-//   }
-//    if(db.viewType === "text"){
-//     return <TextView databaseId={db._id} />;
-//   }
-//    if(db.viewType === "heading"){
-//     return <HeadingView databaseId={db._id} />;
-//   }
-//    if(db.viewType === "numberlist"){
-//     return <NumberListView databaseId={db._id} />;
-//   }
-//   if(db.viewType === "bullatedlist"){
-//     return <BulletedListView databaseId={db._id} />;
-//   }
-//   if(db.viewType === "pagelink"){
-//     return <LinkProject taskId="task1" />
-//   }
-
-//   return <div className="p-6 border rounded-2xl">📊 Table View (coming)</div>;
-// }
-
 import TimelineView from "./TimelineView";
 import TableView from "./view/TableView";
-import TableView1 from './gallery/TableView';
 import GalleryView from "./gallery/GalleryView";
 import BoardView from "./board/BoardView";
 import TodoView from "./todo/TodoView";
@@ -87,64 +7,39 @@ import TextView from "./text/TextView";
 import HeadingView from "./heading/HeadingView";
 import NumberListView from "./numberlist/NumberListView";
 import BulletedListView from "./bullete/BulletedView";
-import ExcelTable from "./excel/ExcelTable";
 import { LinkProject } from "./link/LinkProject";
 import PresentationView from "./presentation/PresentationView";
 import VideoView from "./video/VideoView";
 import WhiteboardView from "./whiteboard/WhiteboardView";
+import SocialMediaView from "./socialmedia/SocialMediaView"; // ✅ new
 
-export default function DatabaseViewRenderer({ db, isViewOnly = false }: { db: any; isViewOnly?: boolean }) {
-  if (db.viewType === "timeline") {
-    return <TimelineView databaseId={db._id} />;
-  }
+function withDb(Component: any, databaseId: string) {
+  return <Component databaseId={databaseId} />;
+}
 
-  if (db.viewType === "board") {
-    return <BoardView databaseId={db._id} />;
-  }
+export default function DatabaseViewRenderer({
+  db,
+  isViewOnly = false,
+}: {
+  db: any;
+  isViewOnly?: boolean;
+}) {
+  const id = db._id;
 
-  if (db.viewType === "gallery") {
-    return <GalleryView databaseId={db._id} />;
-  }
+  if (db.viewType === "timeline")     return withDb(TimelineView, id);
+  if (db.viewType === "board")        return withDb(BoardView, id);
+  if (db.viewType === "gallery")      return withDb(GalleryView, id);
+  if (db.viewType === "table")        return <TableView databaseId={id} isViewOnly={isViewOnly} />;
+  if (db.viewType === "todo")         return withDb(TodoView, id);
+  if (db.viewType === "text")         return withDb(TextView, id);
+  if (db.viewType === "heading")      return withDb(HeadingView, id);
+  if (db.viewType === "numberlist")   return withDb(NumberListView, id);
+  if (db.viewType === "bullatedlist") return withDb(BulletedListView, id);
+  if (db.viewType === "pagelink")     return <LinkProject taskId="task1" />;
+  if (db.viewType === "presentation") return withDb(PresentationView, id);
+  if (db.viewType === "video")        return withDb(VideoView, id);
+  if (db.viewType === "whiteboard")   return withDb(WhiteboardView, id);
+  if (db.viewType === "socialmedia")  return withDb(SocialMediaView, id); // ✅ new
 
-  if (db.viewType === "table") {
-    return <TableView databaseId={db._id} isViewOnly={isViewOnly} />;
-  }
-
-  if (db.viewType === "todo") {
-    return <TodoView databaseId={db._id} />;
-  }
-
-  if (db.viewType === "text") {
-    return <TextView databaseId={db._id} />;
-  }
-
-  if (db.viewType === "heading") {
-    return <HeadingView databaseId={db._id} />;
-  }
-
-  if (db.viewType === "numberlist") {
-    return <NumberListView databaseId={db._id} />;
-  }
-
-  if (db.viewType === "bullatedlist") {
-    return <BulletedListView databaseId={db._id} />;
-  }
-
-  if (db.viewType === "pagelink") {
-    return <LinkProject taskId="task1" />;
-  }
-
-  if (db.viewType === "presentation") {
-    return <PresentationView databaseId={db._id} />;
-  }
-
-  if (db.viewType === "video") {
-    return <VideoView databaseId={db._id} />;
-  }
-
-  if (db.viewType === "whiteboard") {
-    return <WhiteboardView databaseId={db._id} />;
-  }
-
-  return <div className="p-6 border rounded-2xl">📊 Table View (coming)</div>;
+  return <div className="p-6 border rounded-2xl">📊 View coming soon</div>;
 }

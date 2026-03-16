@@ -1,83 +1,11 @@
-// import { create } from "zustand";
-
-// export type ViewType = "timeline" | "table" | "board" | "gallery";
-
-// export type Project = {
-//   _id: string;
-//   name: string;
-//   emoji: string;
-// };
-
-// export type Database = {
-//   _id: string;
-//   projectId: string;
-//   name: string;
-//   icon: string;
-//   viewType: ViewType;
-// };
-
-// type WorkspaceState = {
-//   projects: Project[];
-//   databasesByProject: Record<string, Database[]>;
-//   activeProjectId: string | null;
-//   activeDatabaseId: string | null;
-
-//   fetchProjects: () => Promise<void>;
-//   fetchDatabases: (projectId: string) => Promise<void>;
-
-//   setActiveProject: (projectId: string) => void;
-//   setActiveDatabase: (dbId: string) => void;
-// };
-
-// export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
-//   projects: [],
-//   databasesByProject: {},
-//   activeProjectId: null,
-//   activeDatabaseId: null,
-
-//   fetchProjects: async () => {
-//     const res = await fetch("/api/projects");
-//     const data = await res.json();
-//     set({ projects: data });
-//   },
-
-//   fetchDatabases: async (projectId) => {
-//     const res = await fetch(`/api/databases?projectId=${projectId}`);
-//     const data = await res.json();
-
-//     set((state) => ({
-//       databasesByProject: {
-//         ...state.databasesByProject,
-//         [projectId]: data,
-//       },
-//     }));
-//   },
-
-//   setActiveProject: (projectId) => {
-//     set({ activeProjectId: projectId, activeDatabaseId: null });
-//     get().fetchDatabases(projectId);
-//   },
-
-//   setActiveDatabase: (dbId) => set({ activeDatabaseId: dbId }),
-// }));
-
-
 import { create } from "zustand";
 
 export type ViewType =
-  | "timeline"
-  | "table"
-  | "board"
-  | "gallery"
-  | "todo"
-  | "text"
-  | "heading"
-  | "bullatedlist"
-  | "numberlist"
-  | "pagelink"
-  | "presentation"
-  | "video"
-  | "whiteboard"
+  | "timeline" | "table" | "board" | "gallery"
+  | "todo" | "text" | "heading" | "bullatedlist"
+  | "numberlist" | "pagelink"
+  | "presentation" | "video" | "whiteboard"
+  | "socialmedia" // ✅ new
   | "settings";
 
 export type Project = {
@@ -100,14 +28,13 @@ type WorkspaceState = {
   databasesByProject: Record<string, Database[]>;
   activeProjectId: string | null;
   activeDatabaseId: string | null;
-  activeDatabaseObject: Database | null; // ✅ new — holds the full DB object
+  activeDatabaseObject: Database | null;
 
   fetchProjects: () => Promise<void>;
   fetchDatabases: (projectId: string) => Promise<void>;
-
   setActiveProject: (projectId: string) => void;
-  setActiveDatabase: (dbIdOrObject: string | Database) => void; // ✅ accepts both
-  clearActiveDatabase: () => void; // ✅ new — reset active DB
+  setActiveDatabase: (dbIdOrObject: string | Database) => void;
+  clearActiveDatabase: () => void;
 };
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
@@ -122,60 +49,33 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       const res = await fetch("/api/projects");
       const data = await res.json();
       set({ projects: data });
-    } catch (err) {
-      console.error("Failed to fetch projects:", err);
-    }
+    } catch (err) { console.error("fetchProjects:", err); }
   },
 
   fetchDatabases: async (projectId) => {
     try {
       const res = await fetch(`/api/databases?projectId=${projectId}`);
       const data = await res.json();
-
       set((state) => ({
-        databasesByProject: {
-          ...state.databasesByProject,
-          [projectId]: data,
-        },
+        databasesByProject: { ...state.databasesByProject, [projectId]: data },
       }));
-    } catch (err) {
-      console.error("Failed to fetch databases:", err);
-    }
+    } catch (err) { console.error("fetchDatabases:", err); }
   },
 
   setActiveProject: (projectId) => {
-    set({
-      activeProjectId: projectId,
-      activeDatabaseId: null,
-      activeDatabaseObject: null,
-    });
+    set({ activeProjectId: projectId, activeDatabaseId: null, activeDatabaseObject: null });
     get().fetchDatabases(projectId);
   },
 
-  // ✅ Accepts either a string ID or a full Database object
   setActiveDatabase: (dbIdOrObject) => {
     if (typeof dbIdOrObject === "string") {
-      // Called with just an ID — find the object from the store if possible
-      const state = get();
-      const allDbs = Object.values(state.databasesByProject).flat();
+      const allDbs = Object.values(get().databasesByProject).flat();
       const found = allDbs.find((db) => db._id === dbIdOrObject) ?? null;
-
-      set({
-        activeDatabaseId: dbIdOrObject,
-        activeDatabaseObject: found,
-      });
+      set({ activeDatabaseId: dbIdOrObject, activeDatabaseObject: found });
     } else {
-      // Called with full Database object (e.g. from ViewPickerCard after creation)
-      set({
-        activeDatabaseId: dbIdOrObject._id,
-        activeDatabaseObject: dbIdOrObject,
-      });
+      set({ activeDatabaseId: dbIdOrObject._id, activeDatabaseObject: dbIdOrObject });
     }
   },
 
-  clearActiveDatabase: () =>
-    set({
-      activeDatabaseId: null,
-      activeDatabaseObject: null,
-    }),
+  clearActiveDatabase: () => set({ activeDatabaseId: null, activeDatabaseObject: null }),
 }));

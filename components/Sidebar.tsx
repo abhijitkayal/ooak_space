@@ -11,6 +11,24 @@ import {
 import ProjectRow from "./ProjectsRow";
 import { useWorkspaceStore } from "@/app/store/WorkspaceStore";
 
+// DND Kit imports
+import {
+  DndContext,
+  closestCorners,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  UniqueIdentifier,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 export const EMOJI_LIST = [
   "😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇",
   "😉","😍","🥰","😘","😋","😎","🤓","🥳","😭","😡",
@@ -60,11 +78,16 @@ export default function Sidebar({ view, setView }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [mounted, setMounted] = useState(false);
-  const [open, setOpen] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [pages, setPages] = useState<SidebarPage[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
+   const [mounted, setMounted] = useState(() => {
+     if (typeof window !== 'undefined') {
+       return true;
+     }
+     return false;
+   });
+   const [open, setOpen] = useState(true);
+   const [mobileOpen, setMobileOpen] = useState(false);
+   const [pages, setPages] = useState<SidebarPage[]>([]);
+   const [projects, setProjects] = useState<Project[]>([]);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [pageForm, setPageForm] = useState<{ pageName: string; menuKey: MenuKey | ""; emoji: string }>({
@@ -73,10 +96,13 @@ export default function Sidebar({ view, setView }: SidebarProps) {
   const [lastSavedName, setLastSavedName] = useState("");
   const [currentPageId, setCurrentPageId] = useState<string | null>(null);
 
-  const [createProjectModalOpen, setCreateProjectModalOpen] = useState(false);
-  const [projectForm, setProjectForm] = useState({ name: "", emoji: "📁" });
-  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const emojiPickerRef = useRef<HTMLDivElement>(null);
+   const [createProjectModalOpen, setCreateProjectModalOpen] = useState(false);
+   const [projectForm, setProjectForm] = useState({ name: "", emoji: "📁" });
+   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+   const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+   // DND state
+   const [draggedItem, setDraggedItem] = useState<{ type: 'project' | 'page'; id: string } | null>(null);
 
   // ✅ WorkspaceStore — used to sync active database across app
   const { setActiveDatabase, setActiveProject } = useWorkspaceStore();
